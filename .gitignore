@@ -1,0 +1,20 @@
+# temp files
+*.swp
+
+# packr files
+*-packr.go
+
+# protobuf files
+*.pb.go
+
+# built files
+/build
+
+# dep files
+/bin
+
+# test files
+/internal/kv/leveldb/leveldb_test_*
+
+# mac File
+.DS_Store

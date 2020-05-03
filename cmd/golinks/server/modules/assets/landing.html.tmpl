@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  {{template "base/header.html.tmpl" .}}
+  <body>
+      {{template "base/navbar.html.tmpl" .}}
+      <div class="uk-section-secondary uk-section-large">
+      <div class="uk-container">
+      <div class="uk-container uk-padding-large">
+        <div class="uk-h1 uk-text-primary"><span class="uk-text-bold">GO</span> LINKS</div>
+          <div class="uk-text-muted uk-margin-large-bottom">
+            Golinks is a <span class="uk-text-bold uk-text-emphasis">open-sourced</span> short link redirect service.
+          </div>
+          <a href="org" class="uk-button uk-button-primary uk-button-large uk-text-bold uk-margin-right">Register Organization</a>
+          <a href="org/manage" class="uk-button uk-button-default uk-button-large uk-text-bold">Add User</a>
+        </div >
+      </div>
+    </div>
+    <div class="uk-section-primary uk-section">
+      <div class="uk-container uk-padding-large">
+        <div class="uk-h1 uk-text-primary uk-text-right">CONTRIBUTE</span></div>
+          <div class="uk-text-right">
+             <span class="uk-text-bold uk-text-emphasis">GOLINKS</span> is an
+              open-sourced software.
+          </div>
+          <div class="uk-text-right">
+             Feel free to open issues,submit PRs and fork on GitHub.
+          </div>
+          <div class="uk-margin-large-top uk-text-right">
+            <a href="https://github.com/haostudio/golinks"
+               class="uk-button uk-button-primary uk-button-large uk-text-bold">
+              FORK ME
+            </a>
+          </div>
+      </div>
+    </div>
+    {{template "base/footer.html.tmpl" .}}
+  </body>
+</html>

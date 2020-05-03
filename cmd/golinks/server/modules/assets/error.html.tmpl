@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  {{template "base/header.html.tmpl" .}}
+  <body>
+    <div class="uk-section-primary uk-preserve-color">
+      <div class="uk-section">
+        <div class="uk-container">
+          <div
+            class="uk-margin uk-card uk-card-default uk-card-hover uk-card-body"
+          >
+            <div class="uk-card-title">
+              <span class="uk-text-bold">{{ .StatusCode }} {{ .Title }}</span>
+            </div>
+            <p>{{ .Description }}</p?>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{template "base/footer.html.tmpl" .}}
+  </body>
+</html>

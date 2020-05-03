@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  {{template "base/header.html.tmpl" .}}
+  <body>
+    <div class="uk-section-primary uk-preserve-color">
+      <div class="uk-section-large">
+        <div class="uk-container">
+          <div
+            class="uk-margin uk-card uk-card-default uk-card-hover uk-card-body"
+          >
+            <div class="uk-card-title">
+            Create Organization
+            </div>
+            <hr class="uk-divider" />
+            <div>
+              <form method="POST">
+                <div class="uk-margin">
+                  <p> Organzation Name: </p>
+                  <input type="text" name="{{ .FormInputName }}" class="uk-input" />
+                  <p> Your Email: </p>
+                  <input type="text" name="{{ .FormInputEmail }}" class="uk-input" />
+                  <p> Your Password: </p>
+                  <input type="password" name="{{ .FormInputPassword }}" class="uk-input"/>
+                </div>
+                <input
+                  type="submit" class="uk-button uk-button-primary" value="{{ .FormBtnAction }}" />
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{template "base/footer.html.tmpl" .}}
+  </body>
+</html>

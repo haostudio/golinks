@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  {{template "base/header.html.tmpl" .}}
+  <body>
+    {{template "base/navbar.html.tmpl" .}}
+    <div class="uk-section-primary uk-preserve-color">
+      <div class="uk-section-large">
+        <div class="uk-container">
+          <div
+            class="uk-margin uk-card uk-card-default uk-card-hover uk-card-body"
+          >
+            <div class="uk-card-title">
+              <span class="uk-text-light">http://go/</span><span class="uk-text-bold">{{ .Link.Key }}</span>
+            </div>
+            <hr class="uk-divider" />
+            <form method="POST">
+              <div class="uk-margin">
+                <select class="uk-select" name="{{ .FormInputVersion }}">
+                  <option{{ if eq .Link.Version 0 }} selected{{ end }} value="0">v0</option>
+                  <option{{ if eq .Link.Version 1 }} selected{{ end }} value="1">v1</option>
+                  <option{{ if eq .Link.Version 2 }} selected{{ end }} value="2">v2</option>
+                </select>
+              </div>
+              <div class="uk-margin">
+                <input
+                  class="uk-input"
+                  type="text"
+                  name="{{ .FormInputPayload }}"
+                  placeholder="http(s)://....."
+                  value="{{ .Link.Format }}"
+                />
+              </div>
+              <input
+                type="submit" class="uk-button uk-button-primary"
+                name="{{ .FormInputAction }}" value="{{ .FormSaveValue }}"
+              />
+              {{ if .Link.Exists }}
+              <input
+                type="submit" class="uk-button uk-button-danger"
+                name="{{ .FormInputAction}}" value="{{ .FormDeleteValue }}"
+              />
+              {{ end }}
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{template "base/footer.html.tmpl" .}}
+  </body>
+</html>

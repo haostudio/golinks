@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  {{template "base/header.html.tmpl" .}}
+  <body>
+    {{template "base/navbar.html.tmpl" .}}
+    <div class="uk-section-primary uk-preserve-color">
+      <div class="uk-section-large">
+        <div class="uk-container">
+          {{- range .Links}}
+          <div
+            class="uk-margin uk-card uk-card-small uk-card-default uk-card-hover uk-card-body"
+          >
+            <a
+              class="uk-card-badge uk-button uk-button-small uk-button-primary"
+              href="/links/edit/{{ .Key }}"
+              >Edit</a
+            >
+            <div>
+              <div class="uk-card-title">
+                <span class="uk-text-light">http://go/</span
+                ><span class="uk-text-bold">{{ .Key }}</span>
+              </div>
+              <div class="uk-text-small">
+                {{ .Format }}
+              </div>
+            </div>
+            <div></div>
+          </div>
+          {{- end}}
+        </div>
+      </div>
+    </div>
+    {{template "base/footer.html.tmpl" .}}
+  </body>
+</html>

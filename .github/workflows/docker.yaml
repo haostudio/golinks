@@ -13,10 +13,16 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - name: login to github container image registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
       - name: checkout
         uses: actions/checkout@master
       - run: git fetch --tags --unshallow
-      - name: publish with version tag
+      - name: publish to docker hub with version tag
         run: make docker docker-push
-      - name: publish with latest tag
+      - name: publish to docker hub with latest tag
         run: DOCKER_TAG=latest make docker docker-push
+      - name: publish to docker hub with version tag
+        run: DOCKER_REGISTRY=docker.pkg.github.com/haostudio/golinks make docker docker-push
+      - name: publish to docker hub with latest tag
+        run: DOCKER_TAG=latest DOCKER_REGISTRY=docker.pkg.github.com/haostudio/golinks make docker docker-push

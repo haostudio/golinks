@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/haostudio/golinks/cmd/golinks/server/modules/webbase"
 	"github.com/haostudio/golinks/internal/api/middlewares"
 	"github.com/haostudio/golinks/internal/auth"
+	"github.com/haostudio/golinks/internal/service/golinks/modules/webbase"
 )
 
 const (

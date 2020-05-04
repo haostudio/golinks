@@ -22,7 +22,7 @@ jobs:
         run: make docker docker-push
       - name: publish to docker hub with latest tag
         run: DOCKER_TAG=latest make docker docker-push
-      - name: publish to docker hub with version tag
+      - name: publish to github container image registry with version tag
         run: DOCKER_REGISTRY=docker.pkg.github.com/haostudio/golinks make docker docker-push
-      - name: publish to docker hub with latest tag
+      - name: publish to github container image registry with latest tag
         run: DOCKER_TAG=latest DOCKER_REGISTRY=docker.pkg.github.com/haostudio/golinks make docker docker-push

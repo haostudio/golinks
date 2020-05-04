@@ -3,12 +3,10 @@ package main
 import (
 	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"runtime/debug"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
@@ -16,10 +14,10 @@ import (
 	"github.com/popodidi/conf/source/env"
 	"github.com/popodidi/conf/source/yaml"
 	"github.com/popodidi/log"
-	"github.com/soheilhy/cmux"
 
-	"github.com/haostudio/golinks/cmd/golinks/server"
 	"github.com/haostudio/golinks/internal/encoding/gob"
+	"github.com/haostudio/golinks/internal/service"
+	"github.com/haostudio/golinks/internal/service/golinks"
 	"github.com/haostudio/golinks/internal/version"
 )
 
@@ -103,53 +101,26 @@ func main() {
 		}
 	}()
 
-	// WaitGroup to control graceful shutdown
-	var wg sync.WaitGroup
+	// Setup service mux
+	mux := service.NewMux(logger)
 
-	// Setup TCP server mux
+	// Setup default HTTP server
+	if config.HTTP.Golinks {
+		mux.Append(golinks.New(golinks.Config{
+			Gin:          gin.New(),
+			Address:      fmt.Sprintf("0.0.0.0:%d", config.Port),
+			Traced:       config.Metrics.Enabled(),
+			LinkStore:    linkStore,
+			AuthProvider: authProvider,
+		}))
+	}
+
 	logger.Info("server listening to port [%d]", config.Port)
 	tcpListener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", config.Port))
 	if err != nil {
 		logger.Critical("failed to listen TCP. %v", err)
 	}
-	mux := cmux.New(tcpListener)
-
-	// Setup default HTTP server
-	if config.HTTP.Golinks {
-		httpListener := mux.Match(cmux.Any())
-		httpServer := &http.Server{
-			Addr: fmt.Sprintf("0.0.0.0:%d", config.Port),
-			Handler: server.New(server.Config{
-				Gin:          gin.New(),
-				Traced:       config.Metrics.Enabled(),
-				LinkStore:    linkStore,
-				AuthProvider: authProvider,
-			}),
-		}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err := httpServer.Serve(httpListener)
-			if err != nil {
-				logger.Warn("http server: %v", err)
-			}
-		}()
-	}
-
-	// TCP mux serve
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		err := mux.Serve()
-		if err != nil {
-			logger.Warn("tcp mux stopped: %v", err)
-		}
-	}()
-
-	// Handle shutdown signals
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
 		quitChan := make(chan os.Signal, 1)
 		signal.Notify(quitChan, os.Interrupt, syscall.SIGTERM)
 		sig := <-quitChan
@@ -159,9 +130,10 @@ func main() {
 			logger.Error("tcp listener stopped with error %v", err)
 		}
 	}()
-
-	// Wait until server done
-	wg.Wait()
+	err = mux.Serve(tcpListener)
+	if err != nil {
+		logger.Warn("tcp mux stopped: %v", err)
+	}
 	logger.Info("process terminated")
 }
 

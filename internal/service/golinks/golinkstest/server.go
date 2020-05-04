@@ -1,31 +1,30 @@
-package servertest
+package golinkstest
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 
-	"github.com/haostudio/golinks/cmd/golinks/server"
 	authkv "github.com/haostudio/golinks/internal/auth/kv"
 	"github.com/haostudio/golinks/internal/encoding/gob"
 	"github.com/haostudio/golinks/internal/kv/memory"
 	lnkv "github.com/haostudio/golinks/internal/link/kv"
+	"github.com/haostudio/golinks/internal/service"
+	"github.com/haostudio/golinks/internal/service/golinks"
 )
 
 // NewTestServer returns a server with memory store and cache.
-func NewTestServer() http.Handler {
+func NewTestServer() service.Service {
 	store := memory.New()
 	enc := gob.New()
 
 	lnStore := lnkv.New(store.In("link"), enc)
 	authProvider := authkv.New(store.In("auth"), enc)
 
-	conf := server.Config{
+	conf := golinks.Config{
 		Gin:          gin.Default(),
 		AuthProvider: authProvider,
 		LinkStore:    lnStore,
 	}
 	gin.Default()
 
-	return server.New(conf)
+	return golinks.New(conf)
 }

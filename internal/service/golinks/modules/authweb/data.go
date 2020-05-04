@@ -1,6 +1,6 @@
 package authweb
 
-import "github.com/haostudio/golinks/cmd/golinks/server/modules/webbase"
+import "github.com/haostudio/golinks/internal/service/golinks/modules/webbase"
 
 // User defines a user data for template
 type User struct {

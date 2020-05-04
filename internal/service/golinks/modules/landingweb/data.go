@@ -1,6 +1,6 @@
 package landingweb
 
-import "github.com/haostudio/golinks/cmd/golinks/server/modules/webbase"
+import "github.com/haostudio/golinks/internal/service/golinks/modules/webbase"
 
 // Data defines the data for landing.html template.
 type Data struct {

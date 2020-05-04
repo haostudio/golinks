@@ -39,7 +39,7 @@ func newStore(logger log.Logger, conf StoreConfig, traceEnabled bool) (
 	case "bolt":
 		store = newBoltStore(logger, conf.Bolt)
 	case "memory":
-		store = newMemStore(logger, conf.Memory)
+		store = newMemStore(logger, conf.Memory, false)
 	default:
 		logger.Critical("unknown link storage type: %s", conf.Type)
 	}
@@ -62,7 +62,7 @@ func newStore(logger log.Logger, conf StoreConfig, traceEnabled bool) (
 			Engine: "lru",
 		}
 		memConf.LRU.Cap = 1 << 10
-		cacheStore := newMemStore(logger, memConf)
+		cacheStore := newMemStore(logger, memConf, true)
 		closeCache = cacheStore.Close
 		store = cached.New(store, cacheStore.In(cacheNamespace))
 	}
@@ -87,15 +87,14 @@ type MemStore struct {
 	}
 }
 
-func newMemStore(logger log.Logger, conf MemStore) kv.Store {
+func newMemStore(logger log.Logger, conf MemStore, asCache bool) kv.Store {
+	if !asCache {
+		logger.Warn("data in memory store is not persistent")
+	}
 	switch conf.Engine {
 	case "map":
-		logger.Warn("using lru as store may lose data")
-		logger.Warn("use with your own risk for persistent data")
 		return memory.New()
 	case "lru":
-		logger.Warn("using lru as store may lose data")
-		logger.Warn("use with your own risk for persistent data")
 		return memory.NewLRU(conf.LRU.Cap)
 	default:
 		logger.Critical("unsupported memory store engint: %s", conf.Engine)

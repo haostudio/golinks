@@ -20,10 +20,14 @@ func NewTestServer() service.Service {
 	authProvider := authkv.New(store.In("auth"), enc)
 
 	conf := golinks.Config{
-		Gin:          gin.Default(),
-		AuthProvider: authProvider,
-		LinkStore:    lnStore,
+		Gin:       gin.Default(),
+		Address:   "0.0.0.0:8000",
+		Traced:    false,
+		LinkStore: lnStore,
 	}
+	conf.Auth.Enabled = true
+	conf.Auth.DefaultOrg = ""
+	conf.Auth.Provider = authProvider
 	gin.Default()
 
 	return golinks.New(conf)

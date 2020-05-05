@@ -24,11 +24,15 @@ import (
 
 // Config defines the golinks http service config.
 type Config struct {
-	Gin          *gin.Engine
-	Address      string
-	Traced       bool
-	AuthProvider auth.Provider
-	LinkStore    link.Store
+	Gin     *gin.Engine
+	Address string
+	Traced  bool
+	Auth    struct {
+		Enabled    bool
+		DefaultOrg string        // default org for Auth.Enabled = false
+		Provider   auth.Provider // provider for Auth.Enabled = true
+	}
+	LinkStore link.Store
 }
 
 // New returns a golinks http service.
@@ -76,7 +80,12 @@ func (s *svc) buildRouter() http.Handler {
 
 	// Log server config
 	logger.Info("server link store: %s", s.LinkStore)
-	logger.Info("server auth provider: %s", s.AuthProvider)
+	if s.Auth.Enabled {
+		logger.Info("server auth provider: %s", s.Auth.Provider)
+	} else {
+		logger.Warn("server auth disabled")
+		logger.Warn("server default org: %s", s.Auth.DefaultOrg)
+	}
 
 	// Setup middlewares.
 	if s.Traced {
@@ -95,43 +104,65 @@ func (s *svc) buildRouter() http.Handler {
 
 	// Landing page
 	landingweb.Register(router, landingweb.Config{
-		Traced: s.Traced,
+		Traced:      s.Traced,
+		AuthEnabled: s.Auth.Enabled,
 	})
 
 	// Link module
 	lnGroup := router.Group("links")
-	lnGroup.Use(middlewares.Auth(s.AuthProvider))
+	if s.Auth.Enabled {
+		lnGroup.Use(middlewares.Auth(s.Auth.Provider))
+	} else {
+		lnGroup.Use(middlewares.NoAuth(s.Auth.DefaultOrg))
+	}
 	linkweb.Register(lnGroup, linkweb.Config{
 		Store:  s.LinkStore,
 		Traced: s.Traced,
 	})
 
 	// Org web module
-	orgGroup := router.Group("org")
-	authweb.Register(orgGroup, authweb.Config{
-		Traced:   s.Traced,
-		Provider: s.AuthProvider,
-	})
+	if s.Auth.Enabled {
+		orgGroup := router.Group("org")
+		authweb.Register(orgGroup, authweb.Config{
+			Traced:   s.Traced,
+			Provider: s.Auth.Provider,
+		})
+	}
 
 	// Link api module
 	lnAPIGroup := router.Group("api/links")
-	lnAPIGroup.Use(middlewares.Auth(s.AuthProvider))
+	if s.Auth.Enabled {
+		lnAPIGroup.Use(middlewares.Auth(s.Auth.Provider))
+	} else {
+		lnAPIGroup.Use(middlewares.NoAuth(s.Auth.DefaultOrg))
+	}
 	linkapi.Register(lnAPIGroup, s.LinkStore)
 
 	// Auth module
-	authGroup := router.Group("api/orgs")
-	authGroup.Use(middlewares.Auth(s.AuthProvider))
-	authapi.Register(authGroup, s.AuthProvider)
+	if s.Auth.Enabled {
+		authGroup := router.Group("api/orgs")
+		authGroup.Use(middlewares.Auth(s.Auth.Provider))
+		authapi.Register(authGroup, s.Auth.Provider)
+	}
 
+	// nolint: godox
+	// TODO: configure rate limit from golinks.Config
 	// Use redirect handler by default.
-	router.NoRoute(
-		middlewares.Auth(s.AuthProvider),
-		middlewares.OrgRateLimit(5, time.Second),
+	var noRoute []gin.HandlerFunc
+	if s.Auth.Enabled {
+		noRoute = append(noRoute, middlewares.Auth(s.Auth.Provider))
+		noRoute = append(noRoute, middlewares.OrgRateLimit(5, time.Second))
+	} else {
+		noRoute = append(noRoute, middlewares.NoAuth(s.Auth.DefaultOrg))
+		noRoute = append(noRoute, middlewares.OrgRateLimit(100, time.Second))
+	}
+	noRoute = append(noRoute,
 		redirect.Handler(redirect.Config{
 			Traced: s.Traced,
 			Store:  s.LinkStore,
 		}),
 	)
+	router.NoRoute(noRoute...)
 
 	return router
 }

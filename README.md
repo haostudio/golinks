@@ -1,5 +1,11 @@
 # Golinks Server
 
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/haostudio/golinks/blob/master/LICENSE)
+![Go](https://github.com/haostudio/golinks/workflows/Go/badge.svg)
+![Docker](https://github.com/haostudio/golinks/workflows/Docker/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/haostudio/golinks)](https://goreportcard.com/report/github.com/haostudio/golinks)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/haostudio/golinks)
+
 ## Usage
 
 ### Run with docker
@@ -31,7 +37,7 @@ $ docker run -v \
 #### Build binary
 
 ```
-$ git clond https://github.com/haostudio/golinks
+$ git clone https://github.com/haostudio/golinks
 $ make deps
 $ make golinks
 ```

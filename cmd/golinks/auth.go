@@ -13,6 +13,10 @@ import (
 
 // AuthProviderConfig defines the auth provider config.
 type AuthProviderConfig struct {
+	NoAuth struct {
+		Enabled    bool   `conf:"default:false"`
+		DefaultOrg string `conf:"default:_no_org_"`
+	}
 	Type string `conf:"default:kv"`
 	Kv   StoreConfig
 }
@@ -20,6 +24,11 @@ type AuthProviderConfig struct {
 func newAuthProvider(logger log.Logger,
 	conf AuthProviderConfig, enc encoding.Binary, traceEnabled bool) (
 	provider auth.Provider, closeFunc func() error) {
+	if conf.NoAuth.Enabled {
+		provider = nil
+		closeFunc = func() error { return nil }
+		return
+	}
 	switch strings.ToLower(conf.Type) {
 	case "kv":
 		provider, closeFunc = newKvAuthProvider(logger, conf.Kv, enc, traceEnabled)

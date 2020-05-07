@@ -12,6 +12,18 @@ import (
 	"github.com/haostudio/golinks/internal/auth"
 )
 
+// NoAuth returns a no auth handler with default org.
+func NoAuth(defaultOrg string) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		getOrg := func(ctx *gin.Context) (org auth.Organization, err error) {
+			org.Name = defaultOrg
+			org.AdminEmail = ""
+			return
+		}
+		ctx.Set(getOrgKey, getOrg)
+	}
+}
+
 // Auth defines the auth middleware.
 func Auth(provider auth.Provider) gin.HandlerFunc {
 	// use HTTP basic auth

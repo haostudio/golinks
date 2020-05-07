@@ -103,20 +103,24 @@ func main() {
 
 	// Setup service mux
 	mux := service.NewMux(logger)
+	addr := fmt.Sprintf("0.0.0.0:%d", config.Port)
 
 	// Setup default HTTP server
 	if config.HTTP.Golinks {
-		mux.Append(golinks.New(golinks.Config{
-			Gin:          gin.New(),
-			Address:      fmt.Sprintf("0.0.0.0:%d", config.Port),
-			Traced:       config.Metrics.Enabled(),
-			LinkStore:    linkStore,
-			AuthProvider: authProvider,
-		}))
+		golinksConfig := golinks.Config{
+			Gin:       gin.New(),
+			Address:   addr,
+			Traced:    config.Metrics.Enabled(),
+			LinkStore: linkStore,
+		}
+		golinksConfig.Auth.Enabled = !config.AuthProvider.NoAuth.Enabled
+		golinksConfig.Auth.DefaultOrg = config.AuthProvider.NoAuth.DefaultOrg
+		golinksConfig.Auth.Provider = authProvider
+		mux.Append(golinks.New(golinksConfig))
 	}
 
 	logger.Info("server listening to port [%d]", config.Port)
-	tcpListener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", config.Port))
+	tcpListener, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Critical("failed to listen TCP. %v", err)
 	}

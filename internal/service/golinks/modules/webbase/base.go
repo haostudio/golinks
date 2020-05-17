@@ -86,7 +86,7 @@ func (w *Base) ServeErr(ctx *gin.Context, err *Error) {
 
 		span.AddAttributes(trace.StringAttribute("err", err.Log))
 	}
-	data := NewErrorPage()
+	data := NewErrorPage(ctx)
 	data.StatusCode = err.StatusCode
 	data.ErrTitle = http.StatusText(err.StatusCode)
 	data.Description = strings.Join(err.Messages, "; ")

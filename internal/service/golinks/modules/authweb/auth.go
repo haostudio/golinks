@@ -78,7 +78,8 @@ func (w *Web) SetOrgUser() gin.HandlerFunc {
 			}
 
 			return PageData{
-				Data:              webbase.NewData("Golinks - Organization Management"),
+				Data: webbase.NewData(
+					"Golinks - Organization Management", ctx),
 				Users:             userSlice,
 				Admin:             admin,
 				FormInputEmail:    formInputEmail,
@@ -126,7 +127,7 @@ func (w *Web) SetOrg() gin.HandlerFunc {
 		"org.html.tmpl",
 		func(ctx *gin.Context) (interface{}, *webbase.Error) {
 			return PageData{
-				Data:              webbase.NewData("Golinks - Organization Creation"),
+				Data:              webbase.NewData("Golinks - Organization Creation", ctx),
 				FormInputName:     formInputName,
 				FormInputEmail:    formInputEmail,
 				FormInputPassword: formInputPassword,

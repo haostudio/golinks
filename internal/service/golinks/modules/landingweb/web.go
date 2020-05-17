@@ -31,7 +31,7 @@ func (w *Web) Landing() gin.HandlerFunc {
 	return w.Handler(
 		"landing.html.tmpl",
 		func(ctx *gin.Context) (interface{}, *webbase.Error) {
-			return NewData(w.AuthEnabled), nil
+			return NewData(w.AuthEnabled, ctx), nil
 		},
 	)
 }

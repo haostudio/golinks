@@ -3,6 +3,8 @@ package linkweb
 import (
 	"fmt"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/haostudio/golinks/internal/link"
 	"github.com/haostudio/golinks/internal/service/golinks/modules/webbase"
 )
@@ -43,9 +45,9 @@ type AllPageData struct {
 }
 
 // NewAllPageData returns links page data.
-func NewAllPageData() AllPageData {
+func NewAllPageData(ctx *gin.Context) AllPageData {
 	return AllPageData{
-		Data: webbase.NewData("Golinks - All links"),
+		Data: webbase.NewData("Golinks - All links", ctx),
 	}
 }
 
@@ -63,8 +65,8 @@ type EditPageData struct {
 }
 
 // NewEditPageData returns edit page data.
-func NewEditPageData() EditPageData {
+func NewEditPageData(ctx *gin.Context) EditPageData {
 	return EditPageData{
-		Data: webbase.NewData("Golinks - Edit links"),
+		Data: webbase.NewData("Golinks - Edit links", ctx),
 	}
 }

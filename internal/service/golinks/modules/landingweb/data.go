@@ -1,6 +1,10 @@
 package landingweb
 
-import "github.com/haostudio/golinks/internal/service/golinks/modules/webbase"
+import (
+	"github.com/gin-gonic/gin"
+
+	"github.com/haostudio/golinks/internal/service/golinks/modules/webbase"
+)
 
 // Data defines the data for landing.html template.
 type Data struct {
@@ -9,9 +13,9 @@ type Data struct {
 }
 
 // NewData returns landing page data.
-func NewData(authEnabled bool) Data {
+func NewData(authEnabled bool, ctx *gin.Context) Data {
 	return Data{
-		Data:        webbase.NewData("Golinks"),
+		Data:        webbase.NewData("Golinks", ctx),
 		AuthEnabled: authEnabled,
 	}
 }

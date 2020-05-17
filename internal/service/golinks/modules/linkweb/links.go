@@ -83,7 +83,7 @@ func (w *Web) Links() gin.HandlerFunc {
 
 			// construct data
 			logger := middlewares.GetLogger(ctx)
-			pageData := NewAllPageData()
+			pageData := NewAllPageData(ctx)
 			for _, key := range keys {
 				ln := links[key]
 				lnData, err := NewLink(key, ln)
@@ -105,7 +105,7 @@ func (w *Web) EditLink() gin.HandlerFunc {
 		func(ctx *gin.Context) (interface{}, *webbase.Error) {
 			key := ctx.Param(w.PathParamLinkKey())
 
-			pageData := NewEditPageData()
+			pageData := NewEditPageData(ctx)
 			pageData.FormInputVersion = formInputVersion
 			pageData.FormInputPayload = formInputPayload
 			pageData.FormInputAction = formInputAction

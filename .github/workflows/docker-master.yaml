@@ -1,8 +1,8 @@
-name: Docker
+name: docker-master
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - master
 jobs:
   build-publish:
     name: publish docker image
@@ -18,11 +18,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@master
       - run: git fetch --tags --unshallow
-      - name: publish to docker hub with version tag
-        run: make docker docker-push
-      - name: publish to docker hub with latest tag
-        run: DOCKER_TAG=latest make docker docker-push
-      - name: publish to github container image registry with version tag
-        run: DOCKER_REGISTRY=docker.pkg.github.com/haostudio/golinks make docker docker-push
-      - name: publish to github container image registry with latest tag
-        run: DOCKER_TAG=latest DOCKER_REGISTRY=docker.pkg.github.com/haostudio/golinks make docker docker-push
+      - name: publish to docker hub with master tag
+        run: DOCKER_TAG=master make docker docker-push
+      - name: publish to github container image registry with master tag
+        run: DOCKER_TAG=master DOCKER_REGISTRY=docker.pkg.github.com/haostudio/golinks make docker docker-push

@@ -41,6 +41,19 @@
               />
               {{ end }}
             </form>
+            <div class="uk-margin-medium-top uk-text-small">
+              <ul>
+                <li><span class="uk-text-bold uk-text-emphasis">v0 / Basic Mode</span>
+                : Simple URL redirect, e.g. <a href="https://go/{{ .Link.Key }}">https://go/{{ .Link.Key }}</a> (<code>{{ .Link.Key }} -> https://github.com</code>) -&gt; <a href="https://github.com">https://github.com</a>
+                </li>
+                <li><span class="uk-text-bold uk-text-emphasis">v1 / Single-Parameter Mode</span>
+                : Redirect with <code>{}</code> in value replaced by text after <code>/</code> in URL path, e.g. <a href="https://go/{{ .Link.Key }}/haostudio/golinks">https://go/{{ .Link.Key }}/haostudio/golinks</a> (<code>{{ .Link.Key }} -> https://github.com/{}/issues</code>) -&gt; <a href="https://github.com/haostudio/golinks/issues">https://github.com/haostudio/golinks/issues</a>
+                </li>
+                <li><span class="uk-text-bold uk-text-emphasis">v2 / Multi-Parameter Mode</span>
+                : The text after <code>/</code> in URL path will be separated by <code>/</code> into a list of parameters and replace <code>{0}</code>, <code>{1}</code>, <code>{2}</code> ... in value, e.g. <a href="https://go/{{ .Link.Key }}/haostudio/golinks">https://go/{{ .Link.Key }}/haostudio/golinks</a> (<code>{{ .Link.Key }} -> https://github.com/{0}/{1}</code>) -&gt; <a href="https://github.com/haostudio/golinks">https://github.com/haostudio/golinks</a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

@@ -49,3 +49,28 @@ $ make golinks
 ```
 $ ./build/golinks
 ```
+
+## Configuration
+
+golinks uses [conf](https://github.com/popodid/conf) for configurations
+and currently supports two sources, environment variables and `golinks_config.yaml` file.
+
+For more advanced configurations, checkout the [conf](https://github.com/popodid/conf),
+the [config struct](https://github.com/haostudio/golinks/blob/master/cmd/golinks/main.go#L32),
+and the [sample config](https://github.com/haostudio/golinks/blob/master/configs/local.yaml).
+
+### Useful Configurations
+
+| Environment Variable /Yaml Path                                         | Type   | Default                             | Usage                                         |
+| ----------------------------------------------------------------------- | ------ | ----------------------------------- | --------------------------------------------- |
+| `PORT` / `Port`                                                         | int    | `8000`                              | Listening port                                |
+| `LOG_LEVEL` / `Log.Level`                                               | int    | `6`                                 | Maximum log level (`1`~`6`)                   |
+| `LOG_STDOUT_ENABLED` / `Log.Stdout.Enabled`                             | bool   | `true`                              | Log to stdout                                 |
+| `LOG_STDOUT_WITHCOLOR` / `Log.Stdout.Enabled`                           | bool   | `true`                              | Log to stdout with color                      |
+| `METRICS_SAMPLERATE` / `Metrics.SampleRate`                             | float  | `1`                                 | Tracing/Metrics sampling rate                 |
+| `METRICS_JAEGER_ENABLED` / `Metrics.Jaeger.Enabled`                     | bool   | `false`                             | Enable tracing with jaeger                    |
+| `METRICS_JAEGER_AGENTENDPOINT` / `Metrics.Jaeger.AgentEndpoint`         | string | `localhost:6831`                    | jaeger agent endpoint                         |
+| `METRICS_JAEGER_COLLECTORENDPOINT` / `Metrics.Jaeger.CollectorEndpoint` | string | `http://localhost:14268/api/traces` | jaeger collector endpoint                     |
+| `METRICS_JAEGER_ENABLED` / `Metrics.Jaeger.Enabled`                     | bool   | `false`                             | Enable tracing with jaeger                    |
+| `AUTHPROVIDER_NOAUTH_ENABLED` / `AuthProvider.NoAuth.Enabled`           | bool   | `false`                             | Run in NoAuth mode                            |
+| `AUTHPROVIDER_NOAUTH_DEFAULTORG` / `AuthProvider.NoAuth.DefaultOrg`     | string | `_no_org_`                          | The default org namespace used in NoAuth mode |

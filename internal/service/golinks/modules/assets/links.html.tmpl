@@ -9,6 +9,7 @@
           {{- range .Links}}
           <div
             class="uk-margin uk-card uk-card-small uk-card-default uk-card-hover uk-card-body"
+            {{ if eq .Version 0 }}style="cursor: pointer;" onclick="window.location='{{ .Format }}';"{{ end }}
           >
             <a
               class="uk-card-badge uk-button uk-button-small uk-button-primary"
@@ -24,7 +25,6 @@
                 {{ .Format }}
               </div>
             </div>
-            <div></div>
           </div>
           {{- end}}
         </div>

@@ -7,6 +7,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/haostudio/golinks)](https://goreportcard.com/report/github.com/haostudio/golinks)
 [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/haostudio/golinks)
 
+![index](./images/index.png?raw=true "Index")
+
 ## Usage
 
 ### Run with docker
@@ -74,3 +76,17 @@ and the [sample config](https://github.com/haostudio/golinks/blob/master/configs
 | `METRICS_JAEGER_ENABLED` / `Metrics.Jaeger.Enabled`                     | bool   | `false`                             | Enable tracing with jaeger                    |
 | `AUTHPROVIDER_NOAUTH_ENABLED` / `AuthProvider.NoAuth.Enabled`           | bool   | `false`                             | Run in NoAuth mode                            |
 | `AUTHPROVIDER_NOAUTH_DEFAULTORG` / `AuthProvider.NoAuth.DefaultOrg`     | string | `_no_org_`                          | The default org namespace used in NoAuth mode |
+
+## Demo
+
+#### Edit link
+
+![edit_link](./images/edit_link.png?raw=true "Edit Link")
+
+#### Register organization
+
+![create_org](./images/create_org.png?raw=true "Create Org")
+
+#### Add user
+
+![create_user](./images/create_user.png?raw=true "Create User")

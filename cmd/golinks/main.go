@@ -129,7 +129,7 @@ func main() {
 		signal.Notify(quitChan, os.Interrupt, syscall.SIGTERM)
 		sig := <-quitChan
 
-		logger.Warn("signal [%s] received. Shutting down TCP server...", sig)
+		logger.Warn("signal [%s] received. shutting down TCP server...", sig)
 		if err := tcpListener.Close(); err != nil {
 			logger.Error("tcp listener stopped with error %v", err)
 		}
@@ -143,7 +143,7 @@ func main() {
 
 func logGolinksInfo(logger log.Logger, cfg *conf.Config) {
 	// Print version info
-	ver := fmt.Sprintf("POPODIDI/GOLINKS %s", version.Version())
+	ver := fmt.Sprintf("HAOSTUDIO/GOLINKS %s", version.Version())
 	bar := strings.Repeat("=", len(ver))
 	logger.Info(bar)
 	logger.Info(ver)

@@ -33,7 +33,7 @@ func newAuthProvider(logger log.Logger,
 	case "kv":
 		provider, closeFunc = newKvAuthProvider(logger, conf.Kv, enc, traceEnabled)
 	default:
-		logger.Critical("unknown link store type: %s", conf.Type)
+		logger.Critical("unknown auth provider type: %s", conf.Type)
 	}
 	if traceEnabled {
 		provider = traced.New(provider)

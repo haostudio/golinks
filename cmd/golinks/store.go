@@ -41,7 +41,7 @@ func newStore(logger log.Logger, conf StoreConfig, traceEnabled bool) (
 	case "memory":
 		store = newMemStore(logger, conf.Memory, false)
 	default:
-		logger.Critical("unknown link storage type: %s", conf.Type)
+		logger.Critical("unknown kv storage type: %s", conf.Type)
 	}
 
 	closeCanonical = store.Close

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gobuffalo/packr"
 	"github.com/popodidi/log"
 	"github.com/soheilhy/cmux"
 
@@ -27,6 +28,7 @@ type Config struct {
 	Gin     *gin.Engine
 	Address string
 	Traced  bool
+	Wiki    bool // server static doc site
 	Auth    struct {
 		Enabled    bool
 		DefaultOrg string        // default org for Auth.Enabled = false
@@ -93,6 +95,16 @@ func (s *svc) buildRouter() http.Handler {
 	}
 	router.Use(middlewares.CtxLogger)
 	router.Use(middlewares.PanicCatcher)
+
+	// static doc site
+	if s.Wiki {
+		fileServer := http.FileServer(packr.NewBox("./wiki"))
+		router.Any("wiki/*path", func(ctx *gin.Context) {
+			// Trim the wiki prefix
+			ctx.Request.URL.Path = ctx.Param("path")
+			fileServer.ServeHTTP(ctx.Writer, ctx.Request)
+		})
+	}
 
 	// nolint: godox
 	// FIXME: add favicon and remove this hack

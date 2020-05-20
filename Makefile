@@ -87,7 +87,7 @@ full-test:
 tidy:
 	$(GO) mod tidy
 
-pre-build: wiki
+pre-build:
 	@$(MKDIR_P) $(BUILDDIR)
 	$(PACKR)
 
@@ -104,7 +104,7 @@ wiki:
 		-v $(GITROOT)/images:/docs/docs/img \
 		squidfunk/mkdocs-material build --clean
 
-docker:
+docker: wiki
 	$(DOCKER) build --build-arg GOLINKS_CONFIG=$(DOCKER_GOLINKS_CONFIG) -t $(DOCKER_IMAGE) .
 
 docker-push:

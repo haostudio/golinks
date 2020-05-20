@@ -1,7 +1,9 @@
 Port: 8000
 
 HTTP:
-  Golinks: true
+  Golinks:
+    Enabled: true
+    # Wiki: false
 
 Log:
   Level: 6

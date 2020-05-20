@@ -54,9 +54,9 @@ GO_DEPS = \
 APPS = \
 	golinks
 
-.PHONY: default pre-build
+.PHONY: default pre-build wiki
 
-default: apps
+default: wiki apps
 
 deps: install-golangci-lint $(foreach DEP,$(GO_DEPS), $(eval CMD = $(word 1,$(subst ;, ,$(DEP)))) install-$(CMD))
 $(foreach DEP,$(GO_DEPS), \
@@ -87,7 +87,7 @@ full-test:
 tidy:
 	$(GO) mod tidy
 
-pre-build:
+pre-build: wiki
 	@$(MKDIR_P) $(BUILDDIR)
 	$(PACKR)
 
@@ -97,6 +97,12 @@ clean:
 
 apps: $(APPS)
 $(foreach app, $(APPS), $(eval $(call BUILD_RULE,$(app))))
+
+wiki:
+	$(DOCKER) run --rm -it \
+		-v $(GITROOT)/wiki:/docs \
+		-v $(GITROOT)/images:/docs/docs/img \
+		squidfunk/mkdocs-material build --clean
 
 docker:
 	$(DOCKER) build --build-arg GOLINKS_CONFIG=$(DOCKER_GOLINKS_CONFIG) -t $(DOCKER_IMAGE) .

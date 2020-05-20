@@ -9,6 +9,7 @@
 
 # built files
 /build
+/wiki/site
 
 # dep files
 /bin

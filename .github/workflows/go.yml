@@ -15,6 +15,6 @@ jobs:
       - name: get dependencies
         run: make deps
       - name: build
-        run: PATH="$PATH:$(go env GOPATH)/bin" make
+        run: PATH="$PATH:$(go env GOPATH)/bin" make apps
       - name: lint and test
         run: PATH="$PATH:$(go env GOPATH)/bin" make lint test

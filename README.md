@@ -1,4 +1,4 @@
-# Golinks Server
+# GOLINKS
 
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/haostudio/golinks/blob/master/LICENSE)
 ![go-build](https://github.com/haostudio/golinks/workflows/go-build/badge.svg)
@@ -20,7 +20,7 @@ Golinks is a open-sourced short link redirect service in Golang, under MIT-licen
 - Out-of-box solution with public docker image `haosutdio/golinks`
 - Tracing with Jaeger
 
-## Usage
+## Get started
 
 ### Run with docker
 
@@ -36,16 +36,17 @@ $ docker run -v \
 #### Build binary
 
 ```sh
+# Clone repo
 $ git clone https://github.com/haostudio/golinks
+# Install dependencies
 $ make deps
+# Build binary
 $ make golinks
-```
-
-#### Run
-
-```sh
+# Run
 $ ./build/golinks
 ```
+
+## Advanced options
 
 ### Run in NoAuth mode
 
@@ -61,45 +62,30 @@ $ docker run -v \
   -e AUTHPROVIDER_NOAUTH_ENABLED=true \
   -e AUTHPROVIDER_NOAUTH_DEFAULTORG=my_org \ # optional
   haostudio/golinks
-
-$ AUTHPROVIDER_NOAUTH_ENABLED=true ./build/golinks
 ```
 
-## Configuration
+### Enable static wiki site
 
-golinks uses [conf](https://github.com/popodid/conf) for configurations
-and currently supports two sources, environment variables and `golinks_config.yaml` file.
+```sh
+$ docker run -v \
+  /path/to/datadir:/opt/golinks/datadir \
+  -p 8000:8000 \
+  -e HTTP_GOLINKS_WIKI=true \
+  haostudio/golinks
+```
 
-For more advanced configurations, checkout the [conf](https://github.com/popodid/conf),
-the [config struct](https://github.com/haostudio/golinks/blob/master/cmd/golinks/main.go#L32),
-and the [sample config](https://github.com/haostudio/golinks/blob/master/configs/local.yaml).
-
-### Useful Configurations
-
-| Environment Variable /Yaml Path                                         | Type   | Default                             | Usage                                         |
-| ----------------------------------------------------------------------- | ------ | ----------------------------------- | --------------------------------------------- |
-| `PORT` / `Port`                                                         | int    | `8000`                              | Listening port                                |
-| `LOG_LEVEL` / `Log.Level`                                               | int    | `6`                                 | Maximum log level (`1`~`6`)                   |
-| `LOG_STDOUT_ENABLED` / `Log.Stdout.Enabled`                             | bool   | `true`                              | Log to stdout                                 |
-| `LOG_STDOUT_WITHCOLOR` / `Log.Stdout.Enabled`                           | bool   | `true`                              | Log to stdout with color                      |
-| `METRICS_SAMPLERATE` / `Metrics.SampleRate`                             | float  | `1`                                 | Tracing/Metrics sampling rate                 |
-| `METRICS_JAEGER_ENABLED` / `Metrics.Jaeger.Enabled`                     | bool   | `false`                             | Enable tracing with jaeger                    |
-| `METRICS_JAEGER_AGENTENDPOINT` / `Metrics.Jaeger.AgentEndpoint`         | string | `localhost:6831`                    | jaeger agent endpoint                         |
-| `METRICS_JAEGER_COLLECTORENDPOINT` / `Metrics.Jaeger.CollectorEndpoint` | string | `http://localhost:14268/api/traces` | jaeger collector endpoint                     |
-| `METRICS_JAEGER_ENABLED` / `Metrics.Jaeger.Enabled`                     | bool   | `false`                             | Enable tracing with jaeger                    |
-| `AUTHPROVIDER_NOAUTH_ENABLED` / `AuthProvider.NoAuth.Enabled`           | bool   | `false`                             | Run in NoAuth mode                            |
-| `AUTHPROVIDER_NOAUTH_DEFAULTORG` / `AuthProvider.NoAuth.DefaultOrg`     | string | `_no_org_`                          | The default org namespace used in NoAuth mode |
+For more options, checkout the [configuration guide](wiki/docs/install.md)
 
 ## Demo
 
-#### Edit link
+### Edit link
 
 ![edit_link](./images/edit_link.png?raw=true "Edit Link")
 
-#### Register organization
+### Register organization
 
 ![create_org](./images/create_org.png?raw=true "Create Org")
 
-#### Add user
+### Add user
 
 ![create_user](./images/create_user.png?raw=true "Create User")

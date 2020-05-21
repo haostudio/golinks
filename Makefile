@@ -99,7 +99,7 @@ apps: $(APPS)
 $(foreach app, $(APPS), $(eval $(call BUILD_RULE,$(app))))
 
 wiki:
-	$(DOCKER) run --rm -it \
+	$(DOCKER) run --rm \
 		-v $(GITROOT)/wiki:/docs \
 		-v $(GITROOT)/images:/docs/docs/img \
 		squidfunk/mkdocs-material build --clean

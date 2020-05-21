@@ -1,0 +1,26 @@
+site_name: GOLINKS
+repo_name: haostudio/golinks
+repo_url: 'https://github.com/haostudio/golinks'
+extra:
+  social:
+    - icon: fontawesome/brands/github-alt
+      link: https://github.com/haostudio/golinks
+theme:
+  name: material
+  palette:
+    primary: blue
+plugins:
+  - search:
+      lang: ['en']
+  - minify:
+      minify_html: true
+markdown_extensions:
+  - codehilite
+  - admonition
+  - toc:
+      permalink: true
+nav:
+  - 'index.md'
+  - 'install.md'
+  - 'dns.md'
+  - 'usage.md'

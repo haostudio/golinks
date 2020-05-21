@@ -36,7 +36,10 @@ type Config struct {
 	LinkStore    LinkStoreConfig
 	AuthProvider AuthProviderConfig
 	HTTP         struct {
-		Golinks bool `conf:"default:true"`
+		Golinks struct {
+			Enabled bool `conf:"default:true"`
+			Wiki    bool `conf:"default:false"`
+		}
 	}
 }
 
@@ -106,11 +109,12 @@ func main() {
 	addr := fmt.Sprintf("0.0.0.0:%d", config.Port)
 
 	// Setup default HTTP server
-	if config.HTTP.Golinks {
+	if config.HTTP.Golinks.Enabled {
 		golinksConfig := golinks.Config{
 			Gin:       gin.New(),
 			Address:   addr,
 			Traced:    config.Metrics.Enabled(),
+			Wiki:      config.HTTP.Golinks.Wiki,
 			LinkStore: linkStore,
 		}
 		golinksConfig.Auth.Enabled = !config.AuthProvider.NoAuth.Enabled

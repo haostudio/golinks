@@ -1,4 +1,4 @@
-package main // nolint: dupl
+package main
 
 import (
 	"strings"

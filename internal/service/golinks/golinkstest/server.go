@@ -1,8 +1,11 @@
 package golinkstest
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 
+	"github.com/haostudio/golinks/internal/auth"
 	authkv "github.com/haostudio/golinks/internal/auth/kv"
 	"github.com/haostudio/golinks/internal/encoding/gob"
 	"github.com/haostudio/golinks/internal/kv/memory"
@@ -27,7 +30,12 @@ func NewTestServer() service.Service {
 	}
 	conf.Auth.Enabled = true
 	conf.Auth.DefaultOrg = ""
-	conf.Auth.Provider = authProvider
+	conf.Auth.Manager = auth.New(auth.Config{
+		Provider:         authProvider,
+		TokenExpieration: 1 * 24 * time.Hour,
+		TokenSecret:      []byte("token_secret"),
+	})
+
 	gin.Default()
 
 	return golinks.New(conf)

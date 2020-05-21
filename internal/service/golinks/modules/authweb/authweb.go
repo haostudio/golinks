@@ -25,7 +25,7 @@ func Register(router gin.IRouter, conf Config) {
 	// org/manage
 	{
 		manageRouter := router.Group("manage")
-		manageRouter.Use(middlewares.Auth(conf.Provider))
+		manageRouter.Use(middlewares.Auth(conf.Manager))
 		manageRouter.GET("", module.SetOrgUser())
 		manageRouter.POST("", module.HandleSetOrgUserForm)
 	}

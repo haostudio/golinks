@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	userNamespace = "_user"
-	orgNamespace  = "_org"
+	userNamespace  = "_user"
+	orgNamespace   = "_org"
+	tokenNamespace = "_token"
 )
 
 // New returns an auth provider.
@@ -135,6 +136,43 @@ func (p *provider) SetOrg(ctx context.Context, org auth.Organization) error {
 
 func (p *provider) DeleteOrg(ctx context.Context, name string) error {
 	return p.store.In(orgNamespace).Delete(ctx, name)
+}
+
+// tokens
+func (p *provider) GetToken(ctx context.Context, tokenStr string) (
+	token auth.Token, err error) {
+	if len(tokenStr) == 0 {
+		err = fmt.Errorf("token is required. %w", auth.ErrBadParams)
+		return
+	}
+	// Get blob from kv
+	b, err := p.store.In(tokenNamespace).Get(ctx, tokenStr)
+	if errors.Is(err, kv.ErrNotFound) {
+		err = auth.ErrNotFound
+		return
+	}
+	if err != nil {
+		err = fmt.Errorf("%v: %w", err, auth.ErrStoreError)
+		return
+	}
+	// Decode
+	err = p.enc.Decode(b, &token)
+	return
+}
+
+func (p *provider) SetToken(ctx context.Context, token auth.Token) error {
+	if len(token.JWT) == 0 {
+		return fmt.Errorf("token is required. %w", auth.ErrBadParams)
+	}
+	blob, err := p.enc.Encode(token)
+	if err != nil {
+		return err
+	}
+	return p.store.In(tokenNamespace).Set(ctx, token.JWT, blob)
+}
+
+func (p *provider) DeleteToken(ctx context.Context, token string) error {
+	return p.store.In(tokenNamespace).Delete(ctx, token)
 }
 
 func (p *provider) String() string {

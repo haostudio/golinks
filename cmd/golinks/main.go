@@ -30,11 +30,12 @@ const (
 
 // Config defines golinks server config.
 type Config struct {
-	Log          LogConfig
-	Port         int `conf:"default:8000"`
-	Metrics      MetricsConfig
-	LinkStore    LinkStoreConfig
-	AuthProvider AuthProviderConfig
+	Log       LogConfig
+	Port      int `conf:"default:8000"`
+	Metrics   MetricsConfig
+	LinkStore LinkStoreConfig
+	// XXX: Use AuthProvider for backward compatibility
+	AuthProvider AuthManagerConfig
 	HTTP         struct {
 		Golinks struct {
 			Enabled bool `conf:"default:true"`
@@ -94,11 +95,11 @@ func main() {
 	}()
 
 	// auth provider
-	authProvider, authProviderClose := newAuthProvider(
+	authManager, authManagerClose := newAuthManager(
 		logger, config.AuthProvider, enc, config.Metrics.Enabled(),
 	)
 	defer func() {
-		err := authProviderClose()
+		err := authManagerClose()
 		if err != nil {
 			logger.Warn("failed to close auth provider. %v", err)
 		}
@@ -119,7 +120,7 @@ func main() {
 		}
 		golinksConfig.Auth.Enabled = !config.AuthProvider.NoAuth.Enabled
 		golinksConfig.Auth.DefaultOrg = config.AuthProvider.NoAuth.DefaultOrg
-		golinksConfig.Auth.Provider = authProvider
+		golinksConfig.Auth.Manager = authManager
 		mux.Append(golinks.New(golinksConfig))
 	}
 

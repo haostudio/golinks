@@ -20,4 +20,9 @@ type Provider interface {
 	GetOrgUsers(ctx context.Context, name string) ([]string, error)
 	SetOrg(ctx context.Context, org Organization) error
 	DeleteOrg(ctx context.Context, name string) error
+
+	// tokens
+	GetToken(ctx context.Context, token string) (Token, error)
+	SetToken(ctx context.Context, token Token) error
+	DeleteToken(ctx context.Context, token string) error
 }

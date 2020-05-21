@@ -4,7 +4,7 @@
 
 !!! Tip "[http://go/org](http://go/org)"
 
-GOLINKS supports multiple organizations with HTTP basic authentication.
+`golinks` supports multiple organizations with HTTP basic authentication.
 So first, we have to register an organization.
 
 ![create_org](img/create_org.png)
@@ -21,8 +21,8 @@ Add more users in your organization.
 
 !!! Tip "[http://go/my.link](http://go/my.link) / [http://go/links/edit/my.link](http://go/links/edit/my.link)"
 
-GOLINKS automatically redirect to the edit page if the link doesn't exist. For
-now, GOLINKS supports 3 versions of links.
+`golinks` automatically redirect to the edit page if the link doesn't exist. For
+now, `golinks` supports 3 versions of links.
 
 - **v0 / Basic Mode**
   Simple URL redirect, e.g. https://go/xxx (`xxx -> https://github.com`) -> https://github.com

@@ -120,10 +120,10 @@ func (s *svc) buildRouter() http.Handler {
 		AuthEnabled: s.Auth.Enabled,
 	})
 
-	// Link module
+	// Link web module
 	lnGroup := router.Group("links")
 	if s.Auth.Enabled {
-		lnGroup.Use(middlewares.Auth(s.Auth.Manager))
+		lnGroup.Use(middlewares.AuthHTTPBasicAuth(s.Auth.Manager))
 	} else {
 		lnGroup.Use(middlewares.NoAuth(s.Auth.DefaultOrg))
 	}
@@ -144,7 +144,7 @@ func (s *svc) buildRouter() http.Handler {
 	// Link api module
 	lnAPIGroup := router.Group("api/links")
 	if s.Auth.Enabled {
-		lnAPIGroup.Use(middlewares.Auth(s.Auth.Manager))
+		lnAPIGroup.Use(middlewares.AuthSimple401(s.Auth.Manager))
 	} else {
 		lnAPIGroup.Use(middlewares.NoAuth(s.Auth.DefaultOrg))
 	}
@@ -153,7 +153,7 @@ func (s *svc) buildRouter() http.Handler {
 	// Auth module
 	if s.Auth.Enabled {
 		authGroup := router.Group("api/orgs")
-		authGroup.Use(middlewares.Auth(s.Auth.Manager))
+		authGroup.Use(middlewares.AuthHTTPBasicAuth(s.Auth.Manager))
 		authapi.Register(authGroup, s.Auth.Manager)
 	}
 
@@ -162,7 +162,7 @@ func (s *svc) buildRouter() http.Handler {
 	// Use redirect handler by default.
 	var noRoute []gin.HandlerFunc
 	if s.Auth.Enabled {
-		noRoute = append(noRoute, middlewares.Auth(s.Auth.Manager))
+		noRoute = append(noRoute, middlewares.AuthHTTPBasicAuth(s.Auth.Manager))
 		noRoute = append(noRoute, middlewares.OrgRateLimit(5, time.Second))
 	} else {
 		noRoute = append(noRoute, middlewares.NoAuth(s.Auth.DefaultOrg))

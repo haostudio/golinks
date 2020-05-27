@@ -18,14 +18,26 @@ func Register(router gin.IRouter, conf Config) {
 		router.POST("", module.HandleSetOrgForm)
 		// Logout
 		router.GET("logout", func(ctx *gin.Context) {
-			ctx.String(http.StatusUnauthorized, "logout success")
+			token, err := middlewares.GetToken(ctx)
+			if err != nil {
+				ctx.String(http.StatusOK, "logout success")
+				return
+			}
+			err = conf.Manager.Logout(ctx.Request.Context(), token)
+			if err != nil {
+				ctx.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+			// remove token
+			middlewares.DeleteToken(ctx)
+			ctx.String(http.StatusOK, "logout success")
 		})
 	}
 
 	// org/manage
 	{
 		manageRouter := router.Group("manage")
-		manageRouter.Use(middlewares.Auth(conf.Manager))
+		manageRouter.Use(middlewares.AuthHTTPBasicAuth(conf.Manager))
 		manageRouter.GET("", module.SetOrgUser())
 		manageRouter.POST("", module.HandleSetOrgUserForm)
 	}

@@ -14,7 +14,7 @@ import (
 
 // AuthManagerConfig defines the auth provider config.
 type AuthManagerConfig struct {
-	TokenExpieration int    `conf:"default:30;usage:token expiration time in day"`
+	TokenExpieration int    `conf:"default:30"` // token expiration time in day
 	TokenSecret      string `conf:"default:_golinks_jwt_token_secret_"`
 
 	NoAuth struct {

@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	. "github.com/haostudio/golinks/internal/auth"
 	"github.com/haostudio/golinks/internal/auth/kv"
 	"github.com/haostudio/golinks/internal/encoding/gob"
 	"github.com/haostudio/golinks/internal/kv/memory"
-	"github.com/stretchr/testify/require"
 )
 
 func TestManagerRegisterUser(t *testing.T) {

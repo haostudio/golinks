@@ -24,15 +24,50 @@ func NoAuth(defaultOrg string) gin.HandlerFunc {
 	}
 }
 
-// Auth defines the auth middleware.
-func Auth(provider auth.Provider) gin.HandlerFunc {
-	// use HTTP basic auth
+// Auth returns the auth middleware based on the "GOLINKS_TOKEN"
+// cookie.
+func Auth(manager *auth.Manager, onAuthError gin.HandlerFunc) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		tokenStr, err := GetToken(ctx)
+		if err != nil {
+			if errors.Is(err, http.ErrNoCookie) {
+				onAuthError(ctx)
+				return
+			}
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		claims, err := manager.Verify(ctx.Request.Context(), tokenStr)
+		if err != nil {
+			if errors.Is(err, auth.ErrInvalidToken) ||
+				errors.Is(err, auth.ErrTokenExpired) {
+				onAuthError(ctx)
+				return
+			}
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		// authorized
+		getUser := func(ctx *gin.Context) (user auth.User, err error) {
+			return manager.GetUser(ctx.Request.Context(), claims.Email)
+		}
+		getOrg := func(ctx *gin.Context) (org auth.Organization, err error) {
+			return manager.GetOrg(ctx.Request.Context(), claims.Org)
+		}
+		ctx.Set(getUserKey, getUser)
+		ctx.Set(getOrgKey, getOrg)
+	}
+}
+
+// AuthHTTPBasicAuth returns the auth middleware based on the "GOLINKS_TOKEN"
+// cookie and requires HTTP Basic Authentication if the user is unauthorized.
+func AuthHTTPBasicAuth(manager *auth.Manager) gin.HandlerFunc {
 	realm := "Basic realm=" + strconv.Quote("Authorization Required")
 	onAuthError := func(ctx *gin.Context) {
 		ctx.Header("WWW-Authenticate", realm)
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 	}
-	return func(ctx *gin.Context) {
+	return Auth(manager, func(ctx *gin.Context) {
 		logger := GetLogger(ctx)
 		authHeader := ctx.Request.Header.Get("Authorization")
 		if len(authHeader) == 0 {
@@ -58,44 +93,82 @@ func Auth(provider auth.Provider) gin.HandlerFunc {
 			onAuthError(ctx)
 			return
 		}
-		user, err := provider.GetUser(ctx.Request.Context(), authStrs[0])
-		if errors.Is(err, auth.ErrNotFound) {
-			logger.Debug("invalid user email: %s", authStrs[0])
-			onAuthError(ctx)
-			return
-		} else if err != nil {
-			logger.Error("failed to get user. err: %v", err)
+		email, password := authStrs[0], authStrs[1]
+		token, err := manager.Login(ctx.Request.Context(), email, password)
+		if err != nil {
+			logger.Debug("manager login error. %s. %s", email)
+			if errors.Is(err, ErrNotFound) {
+				onAuthError(ctx)
+				return
+			}
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
-		if err := user.VerifyPassword(authStrs[1]); err != nil {
-			logger.Debug("invalid user password of %s. err: %v", authStrs[0], err)
-			onAuthError(ctx)
+		claims, err := manager.Verify(ctx.Request.Context(), token.JWT)
+		if err != nil {
+			logger.Debug("manager verify error. s. %s", email, err)
+			if errors.Is(err, ErrNotFound) {
+				onAuthError(ctx)
+				return
+			}
+			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
-
-		// Authorized
-		getOrg := func(ctx *gin.Context) (org auth.Organization, err error) {
-			return provider.GetOrg(ctx.Request.Context(), user.Organization)
+		// authorized
+		SetToken(ctx, token.JWT, int(manager.TokenExpieration.Seconds()))
+		getUser := func(ctx *gin.Context) (user auth.User, err error) {
+			return manager.GetUser(ctx.Request.Context(), email)
 		}
-		ctx.Set(userKey, user)
+		getOrg := func(ctx *gin.Context) (org auth.Organization, err error) {
+			return manager.GetOrg(ctx.Request.Context(), claims.Org)
+		}
+		ctx.Set(getUserKey, getUser)
 		ctx.Set(getOrgKey, getOrg)
-	}
+	})
+}
+
+// AuthSimple401 returns the auth middleware based on the "GOLINKS_TOKEN"
+// cookie and returns 401 if the user is unauthorized.
+func AuthSimple401(manager *auth.Manager) gin.HandlerFunc {
+	return Auth(manager, func(ctx *gin.Context) {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+	})
+}
+
+// GetToken returns the token cookie.
+func GetToken(ctx *gin.Context) (token string, err error) {
+	return ctx.Cookie(tokenCookieKey)
+}
+
+// SetToken sets the token cookie
+func SetToken(ctx *gin.Context, token string, maxAge int) {
+	ctx.SetCookie(
+		tokenCookieKey,
+		token,
+		maxAge,
+		"", "",
+		true, true,
+	)
+}
+
+// DeleteToken deletes the token cookie
+func DeleteToken(ctx *gin.Context) {
+	ctx.SetCookie(tokenCookieKey, "", 0, "", "", true, true)
 }
 
 // GetUser returns the user stored in gin.Context.
 func GetUser(ctx *gin.Context) (user auth.User, err error) {
-	u, ok := ctx.Get(userKey)
+	val, ok := ctx.Get(getUserKey)
 	if !ok {
 		err = ErrNotFound
 		return
 	}
-	user, ok = u.(auth.User)
+	f, ok := val.(func(*gin.Context) (auth.User, error))
 	if !ok {
 		err = ErrInternal
 		return
 	}
-	return
+	return f(ctx)
 }
 
 // GetOrg returns the org stored in gin.Context.

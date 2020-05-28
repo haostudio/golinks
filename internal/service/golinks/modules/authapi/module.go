@@ -11,15 +11,15 @@ import (
 )
 
 // New returns auth api handles.
-func New(provider auth.Provider) *Auth {
+func New(manager *auth.Manager) *Auth {
 	return &Auth{
-		provider: provider,
+		manager: manager,
 	}
 }
 
 // Auth defines the auth api handlers struct.
 type Auth struct {
-	provider auth.Provider
+	manager *auth.Manager
 }
 
 // PathParamUserKey returns the user path parameter
@@ -43,7 +43,7 @@ func (a *Auth) SetOrg(ctx *gin.Context) {
 	}
 
 	// check if the org exists
-	_, err := a.provider.GetOrg(ctx, key)
+	_, err := a.manager.GetOrg(ctx, key)
 	if !errors.Is(err, auth.ErrNotFound) {
 		logger.Error("org already exists, err")
 		ctx.Status(http.StatusBadRequest)
@@ -64,7 +64,7 @@ func (a *Auth) SetOrg(ctx *gin.Context) {
 		Name:       key,
 		AdminEmail: req.Email,
 	}
-	err = a.provider.SetOrg(ctx.Request.Context(), org)
+	err = a.manager.SetOrg(ctx.Request.Context(), org)
 	if err != nil {
 		logger.Error("failed to set org, err: %v", err)
 		ctx.Status(http.StatusInternalServerError)
@@ -73,7 +73,7 @@ func (a *Auth) SetOrg(ctx *gin.Context) {
 	user, err := auth.NewUser(req.Email, req.Password, key)
 	if err != nil {
 		logger.Error("failed to set user pwd, err: %v", err)
-		err = a.provider.DeleteOrg(ctx.Request.Context(), key)
+		err = a.manager.DeleteOrg(ctx.Request.Context(), key)
 		if err != nil {
 			logger.Error("failed to del org, err: %v", err)
 		}
@@ -81,10 +81,10 @@ func (a *Auth) SetOrg(ctx *gin.Context) {
 		return
 	}
 
-	err = a.provider.SetUser(ctx.Request.Context(), *user)
+	err = a.manager.SetUser(ctx.Request.Context(), *user)
 	if err != nil {
 		logger.Error("failed to set user, err: %v", err)
-		err = a.provider.DeleteOrg(ctx.Request.Context(), key)
+		err = a.manager.DeleteOrg(ctx.Request.Context(), key)
 		if err != nil {
 			logger.Error("failed to del org, err: %v", err)
 		}
@@ -108,7 +108,7 @@ func (a *Auth) GetOrg(ctx *gin.Context) {
 		ctx.String(http.StatusBadRequest, "empty key")
 		return
 	}
-	org, err := a.provider.GetOrg(ctx.Request.Context(), key)
+	org, err := a.manager.GetOrg(ctx.Request.Context(), key)
 	if err != nil {
 		logger.Error("failed to get org, err: %v", err)
 		ctx.Status(http.StatusInternalServerError)
@@ -125,7 +125,7 @@ func (a *Auth) GetOrgUsers(ctx *gin.Context) {
 		ctx.String(http.StatusBadRequest, "empty key")
 		return
 	}
-	users, err := a.provider.GetOrgUsers(ctx.Request.Context(), key)
+	users, err := a.manager.GetOrgUsers(ctx.Request.Context(), key)
 	if err != nil {
 		logger.Error("failed to get org users, err: %v", err)
 		ctx.Status(http.StatusInternalServerError)
@@ -143,7 +143,7 @@ func (a *Auth) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := a.provider.GetUser(ctx.Request.Context(), key)
+	user, err := a.manager.GetUser(ctx.Request.Context(), key)
 	if errors.Is(err, auth.ErrNotFound) {
 		logger.Error("User Not Found")
 		ctx.String(http.StatusBadRequest, "user not found")
@@ -164,7 +164,7 @@ func (a *Auth) GetUser(ctx *gin.Context) {
 // GetUsers returns all users.
 func (a *Auth) GetUsers(ctx *gin.Context) {
 	logger := middlewares.GetLogger(ctx)
-	users, err := a.provider.GetUsers(ctx.Request.Context())
+	users, err := a.manager.GetUsers(ctx.Request.Context())
 	if errors.Is(err, auth.ErrNotFound) {
 		logger.Error("User Not Found")
 		ctx.String(http.StatusBadRequest, "user not found")
@@ -206,7 +206,7 @@ func (a *Auth) SetOrgUser(ctx *gin.Context) {
 		return
 	}
 
-	err = a.provider.SetUser(ctx.Request.Context(), *user)
+	err = a.manager.SetUser(ctx.Request.Context(), *user)
 	if err != nil {
 		logger.Error("failed to set user, err: %v", err)
 		ctx.Status(http.StatusInternalServerError)

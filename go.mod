@@ -5,6 +5,7 @@ go 1.13
 require (
 	cloud.google.com/go v0.55.0 // indirect
 	contrib.go.opencensus.io/exporter/jaeger v0.2.0
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.6.2
 	github.com/gobuffalo/envy v1.9.0 // indirect
 	github.com/gobuffalo/packd v1.0.0 // indirect

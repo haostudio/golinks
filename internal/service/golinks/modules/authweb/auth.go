@@ -22,20 +22,20 @@ const (
 // Web defines the web handler module.
 type Web struct {
 	webbase.Base
-	provider auth.Provider
+	manager *auth.Manager
 }
 
 // Config defines the web config.
 type Config struct {
-	Traced   bool
-	Provider auth.Provider
+	Traced  bool
+	Manager *auth.Manager
 }
 
 // New returns a new web handler module.
 func New(conf Config) *Web {
 	return &Web{
-		Base:     webbase.NewBase(conf.Traced),
-		provider: conf.Provider,
+		Base:    webbase.NewBase(conf.Traced),
+		manager: conf.Manager,
 	}
 }
 
@@ -64,7 +64,7 @@ func (w *Web) SetOrgUser() gin.HandlerFunc {
 				admin = true
 			}
 
-			users, err := w.provider.GetOrgUsers(ctx, org.Name)
+			users, err := w.manager.GetOrgUsers(ctx, org.Name)
 			if err != nil {
 				return nil, &webbase.Error{
 					StatusCode: http.StatusInternalServerError,
@@ -110,15 +110,29 @@ func (w *Web) HandleSetOrgUserForm(ctx *gin.Context) {
 		})
 		return
 	}
-	err = w.provider.SetUser(ctx, *user)
-	if err != nil {
+	err = w.manager.RegisterUser(ctx, *user)
+	if err == nil {
+		ctx.Redirect(http.StatusMovedPermanently, "/org/manage")
+		return
+	}
+	if errors.Is(err, auth.ErrUserExists) {
 		w.ServeErr(ctx, &webbase.Error{
-			StatusCode: http.StatusInternalServerError,
-			Log:        fmt.Sprintf("failed to set user, err: %v", err),
+			StatusCode: http.StatusBadRequest,
+			Log:        "user exists",
 		})
 		return
 	}
-	ctx.Redirect(http.StatusMovedPermanently, "/org/manage")
+	if errors.Is(err, auth.ErrNotFound) {
+		w.ServeErr(ctx, &webbase.Error{
+			StatusCode: http.StatusBadRequest,
+			Log:        "org not found",
+		})
+		return
+	}
+	w.ServeErr(ctx, &webbase.Error{
+		StatusCode: http.StatusInternalServerError,
+		Log:        fmt.Sprintf("failed to set user, err: %v", err),
+	})
 }
 
 // SetOrg sets org.
@@ -140,32 +154,12 @@ func (w *Web) SetOrg() gin.HandlerFunc {
 // HandleSetOrgForm handle request to create org.
 func (w *Web) HandleSetOrgForm(ctx *gin.Context) {
 	name := ctx.PostForm(formInputName)
-
-	// check if the org exists
-	_, err := w.provider.GetOrg(ctx, name)
-	if !errors.Is(err, auth.ErrNotFound) {
-		w.ServeErr(ctx, &webbase.Error{
-			StatusCode: http.StatusBadRequest,
-			Log:        "org already exists",
-		})
-		return
-	}
-
 	email := ctx.PostForm(formInputEmail)
 	password := ctx.PostForm(formInputPassword)
 	org := auth.Organization{
 		Name:       name,
 		AdminEmail: email,
 	}
-	err = w.provider.SetOrg(ctx.Request.Context(), org)
-	if err != nil {
-		w.ServeErr(ctx, &webbase.Error{
-			StatusCode: http.StatusInternalServerError,
-			Log:        fmt.Sprintf("failed to set org, err: %v", err),
-		})
-		return
-	}
-
 	user, err := auth.NewUser(email, password, name)
 	if err != nil {
 		w.ServeErr(ctx, &webbase.Error{
@@ -174,36 +168,31 @@ func (w *Web) HandleSetOrgForm(ctx *gin.Context) {
 		})
 		return
 	}
-
-	err = w.provider.SetUser(ctx.Request.Context(), *user)
-	if err != nil {
-		errDelMsg := w.provider.DeleteOrg(ctx.Request.Context(), name)
-		if errDelMsg != nil {
-			w.ServeErr(ctx, &webbase.Error{
-				StatusCode: http.StatusInternalServerError,
-				Log: fmt.Sprintf(
-					"failed to create user, err: %v. "+
-						"failed to delete org, err %v", err, errDelMsg),
-			})
-			return
-		}
+	err = w.manager.RegisterOrgWithAdmin(ctx.Request.Context(), org, *user)
+	if err == nil {
+		// In order to redirect to user add page with authorization,
+		// we hack redirect url with credential.
+		ctx.Writer.Header().Set(
+			"Location",
+			fmt.Sprintf(
+				"http://%s:%s@%s/org/manage",
+				email,
+				password,
+				ctx.Request.Host,
+			),
+		)
+		ctx.AbortWithStatus(http.StatusMovedPermanently)
+		return
+	}
+	if errors.Is(err, auth.ErrOrgExists) {
 		w.ServeErr(ctx, &webbase.Error{
-			StatusCode: http.StatusInternalServerError,
-			Log:        fmt.Sprintf("failed to s user, err: %v", err),
+			StatusCode: http.StatusBadRequest,
+			Log:        "org already exists",
 		})
 		return
 	}
-
-	// In order to redirect to user add page with authorization,
-	// we hack redirect url with credential.
-	ctx.Writer.Header().Set(
-		"Location",
-		fmt.Sprintf(
-			"http://%s:%s@%s/org/manage",
-			email,
-			password,
-			ctx.Request.Host,
-		),
-	)
-	ctx.AbortWithStatus(http.StatusMovedPermanently)
+	w.ServeErr(ctx, &webbase.Error{
+		StatusCode: http.StatusInternalServerError,
+		Log:        fmt.Sprintf("failed to register org, err: %v", err),
+	})
 }

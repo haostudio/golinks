@@ -9,8 +9,8 @@ import (
 )
 
 // Register registers auth endpoints in router.
-func Register(router gin.IRouter, provider auth.Provider) {
-	module := New(provider)
+func Register(router gin.IRouter, manager *auth.Manager) {
+	module := New(manager)
 	router.GET(
 		fmt.Sprintf("/:%s", module.PathParamOrgKey()),
 		module.GetOrg,

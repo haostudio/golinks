@@ -4,7 +4,14 @@ import "errors"
 
 // Exported errors.
 var (
-	ErrNotFound   = errors.New("not found")
+	ErrBadParams     = errors.New("bad parameters")
+	ErrInternalError = errors.New("internal error")
+	ErrNotFound      = errors.New("not found")
+
 	ErrStoreError = errors.New("internal store error")
-	ErrBadParams  = errors.New("bad parameters")
+	ErrOrgExists  = errors.New("org already exists")
+	ErrUserExists = errors.New("user already token")
+
+	ErrInvalidToken = errors.New("invalid token")
+	ErrTokenExpired = errors.New("token expired")
 )

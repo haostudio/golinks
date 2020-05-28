@@ -80,6 +80,26 @@ func (p *provider) DeleteOrg(ctx context.Context, name string) error {
 	return p.provider.DeleteOrg(ctx, name)
 }
 
+// tokens
+func (p *provider) GetToken(ctx context.Context, tokenStr string) (
+	token auth.Token, err error) {
+	ctx, span := p.getSpan(ctx, "provider.GetToken")
+	defer span.End()
+	return p.provider.GetToken(ctx, tokenStr)
+}
+
+func (p *provider) SetToken(ctx context.Context, token auth.Token) error {
+	ctx, span := p.getSpan(ctx, "provider.SetToken")
+	defer span.End()
+	return p.provider.SetToken(ctx, token)
+}
+
+func (p *provider) DeleteToken(ctx context.Context, token string) error {
+	ctx, span := p.getSpan(ctx, "provider.DeleteToken")
+	defer span.End()
+	return p.provider.DeleteToken(ctx, token)
+}
+
 func (p *provider) String() string {
 	return fmt.Sprintf("traced(%s)", p.provider)
 }

@@ -13,10 +13,14 @@ import (
 )
 
 const (
-	formInputEmail    = "email"
-	formInputPassword = "pasword"
-	formInputName     = "name"
-	formBtnAction     = "save"
+	formInputEmail        = "email"
+	formInputPassword     = "password"
+	formInputName         = "name"
+	formInputCallback     = "callback"
+	formBtnAction         = "save"
+	formInputAction       = "action"
+	formRegisterBtnAction = "register"
+	formLoginBtnAction    = "login"
 )
 
 // Web defines the web handler module.
@@ -25,17 +29,68 @@ type Web struct {
 	manager *auth.Manager
 }
 
-// Config defines the web config.
-type Config struct {
-	Traced  bool
-	Manager *auth.Manager
-}
-
 // New returns a new web handler module.
 func New(conf Config) *Web {
 	return &Web{
 		Base:    webbase.NewBase(conf.Traced),
 		manager: conf.Manager,
+	}
+}
+
+// Login returns the login and register page.
+func (w *Web) Login() gin.HandlerFunc {
+	return w.Handler(
+		"login.html.tmpl",
+		func(ctx *gin.Context) (interface{}, *webbase.Error) {
+			callback := ctx.Query("callback")
+			if callback == "" {
+				callback = "/"
+			}
+			return LoginData{
+				Data:                  webbase.NewData("Golinks - Login", ctx),
+				FormInputEmail:        formInputEmail,
+				FormInputPassword:     formInputPassword,
+				FormInputCallback:     formInputCallback,
+				FormInputAction:       formInputAction,
+				FormLoginBtnAction:    formLoginBtnAction,
+				FormRegisterBtnAction: formRegisterBtnAction,
+				Callback:              callback,
+			}, nil
+		},
+	)
+}
+
+// HandleLoginForm handle request to create org user.
+func (w *Web) HandleLoginForm(ctx *gin.Context) {
+	email := ctx.PostForm(formInputEmail)
+	password := ctx.PostForm(formInputPassword)
+	action := ctx.PostForm(formInputAction)
+	callback := ctx.PostForm(formInputCallback)
+	switch action {
+	case formLoginBtnAction:
+		token, err := w.manager.Login(ctx.Request.Context(), email, password)
+		if err != nil {
+			w.ServeErr(ctx, &webbase.Error{
+				StatusCode: http.StatusUnauthorized,
+				Messages:   []string{"Invalid email/password"},
+				Log:        fmt.Sprintf("login failed. %v", err),
+			})
+			return
+		}
+		// authorized
+		middlewares.SetToken(
+			ctx, token.JWT, int(w.manager.TokenExpieration.Seconds()))
+		ctx.Redirect(http.StatusMovedPermanently, callback)
+		return
+	case formRegisterBtnAction:
+		fallthrough
+	default:
+		w.ServeErr(ctx, &webbase.Error{
+			StatusCode: http.StatusBadRequest,
+			Messages:   []string{"Invalid action"},
+			Log:        fmt.Sprintf("invalid action %s", action),
+		})
+		return
 	}
 }
 

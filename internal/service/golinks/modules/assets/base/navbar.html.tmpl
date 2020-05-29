@@ -9,7 +9,7 @@
 {{ if .Ctx.LoggedIn }}
   <div class="uk-navbar-right uk-margin-large-right">
     <ul class="uk-navbar-nav">
-      <li class="uk-text-bold"><a href='javascript:var r = new XMLHttpRequest();r.open("GET", "/org/logout");r.send();r.onload = function(e){window.location.href="/"}'>LOG OUT</a></li>
+      <li class="uk-text-bold"><a href='/auth/logout'>LOG OUT</a></li>
     </ul>
   </div>
 {{ end }}

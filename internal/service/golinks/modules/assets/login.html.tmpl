@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  {{template "base/header.html.tmpl" .}}
+  <body>
+    {{template "base/navbar.html.tmpl" .}}
+    <div class="uk-section-primary uk-preserve-color">
+      <div class="uk-section-large">
+        <div class="uk-container">
+          <div
+            class="uk-margin uk-card uk-card-default uk-card-hover uk-card-body"
+          >
+            <div class="uk-card-title">
+            Login
+            </div>
+            <hr class="uk-divider" />
+            <div>
+              <form method="POST">
+                <div class="uk-margin">
+                  <p> Email: </p>
+                  <input type="text" name="{{ .FormInputEmail }}" class="uk-input" />
+                  <p> Password: </p>
+                  <input type="password" name="{{ .FormInputPassword }}" class="uk-input"/>
+                  <input type="hidden" name="{{ .FormInputCallback }}" class="uk-input" value="{{ .Callback }}"/>
+                </div>
+                <input
+                  type="submit" class="uk-button uk-button-primary"
+                  name="{{ .FormInputAction }}" value="{{ .FormLoginBtnAction }}" />
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{template "base/footer.html.tmpl" .}}
+  </body>
+</html>

@@ -19,3 +19,17 @@ type PageData struct {
 	Users []User
 	Admin bool
 }
+
+// LoginData defines the data for login.html template.
+type LoginData struct {
+	webbase.Data
+
+	FormInputEmail        string
+	FormInputPassword     string
+	FormInputCallback     string
+	FormInputAction       string
+	FormLoginBtnAction    string
+	FormRegisterBtnAction string
+
+	Callback string
+}

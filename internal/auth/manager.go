@@ -189,6 +189,11 @@ func (m *Manager) Login(ctx context.Context, email string, password string) (
 	if err != nil {
 		return
 	}
+	err = user.VerifyPassword(password)
+	if err != nil {
+		err = fmt.Errorf("%v; %w", err, ErrBadParams)
+		return
+	}
 	token, err = NewToken(user, m.TokenSecret, m.TokenExpieration)
 	if err != nil {
 		return

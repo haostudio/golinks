@@ -15,8 +15,7 @@ Golinks is a open-sourced short link redirect service in Golang, under MIT-licen
 
 - Golinks styled (`go/mylink`) short link redirect
 - Parameter substitution (`go/mylink/{VAR} -> https://mylink.com/{VAR}/mypage`)
-- HTTP basic authentication
-- Separate namespaces for multiple organizations
+- Multiple organizations(namespaces) support
 - Out-of-box solution with public docker image `haosutdio/golinks`
 - Tracing with Jaeger
 
@@ -50,10 +49,10 @@ $ ./build/golinks
 
 ### Run in NoAuth mode
 
-By default, `golinks` supports multiple organizations with HTTP basic
-authentication. The links of different organizations are stored in different
-namespaces. Running `golinks` in **NoAuth** mode disables HTTP basic
-authentication and stores all the links in a shared namespace of the **default org**.
+By default, `golinks` supports multiple organizations with JWT authentication.
+The links of different organizations are stored in different namespaces. Running
+`golinks` in **NoAuth** mode disables authentication and stores all the links in
+a shared namespace of the **default org**.
 
 ```sh
 $ docker run -v \

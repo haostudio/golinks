@@ -15,7 +15,6 @@ Golinks is a open-sourced short link redirect service in Golang, under MIT-licen
 
 - Golinks styled (`go/mylink`) short link redirect
 - Parameter substitution (`go/mylink/{VAR} -> https://mylink.com/{VAR}/mypage`)
-- HTTP basic authentication
-- Separate namespaces for multiple organizations
+- Multiple organizations(namespaces) support
 - Out-of-box solution with public docker image `haosutdio/golinks`
 - Tracing with Jaeger

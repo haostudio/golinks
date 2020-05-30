@@ -120,40 +120,38 @@ func (s *svc) buildRouter() http.Handler {
 		AuthEnabled: s.Auth.Enabled,
 	})
 
+	authWebMiddleware := middlewares.NoAuth(s.Auth.DefaultOrg)
+	authAPIMiddleware := middlewares.NoAuth(s.Auth.DefaultOrg)
+
+	// Org web module
+	if s.Auth.Enabled {
+		authGroup := router.Group("auth")
+		authweb.Register(authGroup, authweb.Config{
+			Traced:     s.Traced,
+			Manager:    s.Auth.Manager,
+			PathPrefix: "auth",
+		})
+		authWebMiddleware = authweb.Middleware(s.Auth.Manager, "/auth")
+		authAPIMiddleware = middlewares.AuthSimple401(s.Auth.Manager)
+	}
+
 	// Link web module
 	lnGroup := router.Group("links")
-	if s.Auth.Enabled {
-		lnGroup.Use(middlewares.AuthHTTPBasicAuth(s.Auth.Manager))
-	} else {
-		lnGroup.Use(middlewares.NoAuth(s.Auth.DefaultOrg))
-	}
+	lnGroup.Use(authWebMiddleware)
 	linkweb.Register(lnGroup, linkweb.Config{
 		Store:  s.LinkStore,
 		Traced: s.Traced,
 	})
 
-	// Org web module
-	if s.Auth.Enabled {
-		orgGroup := router.Group("org")
-		authweb.Register(orgGroup, authweb.Config{
-			Traced:  s.Traced,
-			Manager: s.Auth.Manager,
-		})
-	}
-
 	// Link api module
 	lnAPIGroup := router.Group("api/links")
-	if s.Auth.Enabled {
-		lnAPIGroup.Use(middlewares.AuthSimple401(s.Auth.Manager))
-	} else {
-		lnAPIGroup.Use(middlewares.NoAuth(s.Auth.DefaultOrg))
-	}
+	lnAPIGroup.Use(authAPIMiddleware)
 	linkapi.Register(lnAPIGroup, s.LinkStore)
 
 	// Auth module
 	if s.Auth.Enabled {
-		authGroup := router.Group("api/orgs")
-		authGroup.Use(middlewares.AuthHTTPBasicAuth(s.Auth.Manager))
+		authGroup := router.Group("api/auth")
+		authGroup.Use(authAPIMiddleware)
 		authapi.Register(authGroup, s.Auth.Manager)
 	}
 
@@ -161,11 +159,10 @@ func (s *svc) buildRouter() http.Handler {
 	// TODO: configure rate limit from golinks.Config
 	// Use redirect handler by default.
 	var noRoute []gin.HandlerFunc
+	noRoute = append(noRoute, authWebMiddleware)
 	if s.Auth.Enabled {
-		noRoute = append(noRoute, middlewares.AuthHTTPBasicAuth(s.Auth.Manager))
 		noRoute = append(noRoute, middlewares.OrgRateLimit(5, time.Second))
 	} else {
-		noRoute = append(noRoute, middlewares.NoAuth(s.Auth.DefaultOrg))
 		noRoute = append(noRoute, middlewares.OrgRateLimit(100, time.Second))
 	}
 	noRoute = append(noRoute,

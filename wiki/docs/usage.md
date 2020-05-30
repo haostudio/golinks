@@ -4,7 +4,7 @@
 
 !!! Tip "[http://go/org](http://go/org)"
 
-`golinks` supports multiple organizations with HTTP basic authentication.
+`golinks` supports multiple organizations with JWT authentication.
 So first, we have to register an organization.
 
 ![create_org](img/create_org.png)

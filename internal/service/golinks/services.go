@@ -95,6 +95,7 @@ func (s *svc) buildRouter() http.Handler {
 	}
 	router.Use(middlewares.CtxLogger)
 	router.Use(middlewares.PanicCatcher)
+	router.Use(middlewares.Context(s.Auth.Manager))
 
 	// static doc site
 	if s.Wiki {
@@ -131,13 +132,16 @@ func (s *svc) buildRouter() http.Handler {
 			Manager:    s.Auth.Manager,
 			PathPrefix: "auth",
 		})
-		authWebMiddleware = authweb.Middleware(s.Auth.Manager, "/auth")
-		authAPIMiddleware = middlewares.AuthSimple401(s.Auth.Manager)
+		authWebMiddleware = authweb.AuthRequired("/auth")
+		authAPIMiddleware = middlewares.AuthSimple401
 	}
 
 	// Link web module
 	lnGroup := router.Group("links")
 	lnGroup.Use(authWebMiddleware)
+	if s.Auth.Enabled {
+		lnGroup.Use(authweb.OrgRequired("/auth"))
+	}
 	linkweb.Register(lnGroup, linkweb.Config{
 		Store:  s.LinkStore,
 		Traced: s.Traced,

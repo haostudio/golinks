@@ -6,13 +6,17 @@
       <li><a href="/"><span class="uk-text-bold">GO</span> LINKS</a></li>
     </ul>
   </div>
-{{ if .Ctx.LoggedIn }}
   <div class="uk-navbar-right uk-margin-large-right">
+  {{- if .Ctx.LoggedIn }}
     <ul class="uk-navbar-nav">
-      <li class="uk-text-bold"><a href='/auth/logout'>LOG OUT</a></li>
+      <li class="uk-text-bold"><a href='/auth/logout'>LOGOUT</a></li>
     </ul>
+  {{- else }}
+    <ul class="uk-navbar-nav">
+      <li class="uk-text-bold"><a href='/auth/login'>LOGIN / REGISTER</a></li>
+    </ul>
+  {{- end }}
   </div>
-{{ end }}
 </nav>
 </div>
 </div>

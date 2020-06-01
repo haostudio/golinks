@@ -13,14 +13,16 @@ import (
 )
 
 const (
-	formInputEmail        = "email"
-	formInputPassword     = "password"
-	formInputName         = "name"
-	formInputCallback     = "callback"
-	formBtnAction         = "save"
-	formInputAction       = "action"
-	formRegisterBtnAction = "register"
-	formLoginBtnAction    = "login"
+	formBtnActionCreate   = "create"
+	formBtnActionLogin    = "login"
+	formBtnActionRegister = "register"
+	formBtnActionSave     = "save"
+
+	formInputAction   = "action"
+	formInputCallback = "callback"
+	formInputEmail    = "email"
+	formInputName     = "name"
+	formInputPassword = "password"
 )
 
 // Web defines the web handler module.
@@ -52,8 +54,8 @@ func (w *Web) Login() gin.HandlerFunc {
 				FormInputPassword:     formInputPassword,
 				FormInputCallback:     formInputCallback,
 				FormInputAction:       formInputAction,
-				FormLoginBtnAction:    formLoginBtnAction,
-				FormRegisterBtnAction: formRegisterBtnAction,
+				FormLoginBtnAction:    formBtnActionLogin,
+				FormRegisterBtnAction: formBtnActionRegister,
 				Callback:              callback,
 			}, nil
 		},
@@ -67,7 +69,7 @@ func (w *Web) HandleLoginForm(ctx *gin.Context) {
 	action := ctx.PostForm(formInputAction)
 	callback := ctx.PostForm(formInputCallback)
 	switch action {
-	case formLoginBtnAction:
+	case formBtnActionLogin:
 		token, err := w.manager.Login(ctx.Request.Context(), email, password)
 		if err != nil {
 			w.ServeErr(ctx, &webbase.Error{
@@ -82,8 +84,43 @@ func (w *Web) HandleLoginForm(ctx *gin.Context) {
 			ctx, token.JWT, int(w.manager.TokenExpieration.Seconds()))
 		ctx.Redirect(http.StatusMovedPermanently, callback)
 		return
-	case formRegisterBtnAction:
-		fallthrough
+	case formBtnActionRegister:
+		user, err := auth.NewUser(email, password, "")
+		if err != nil {
+			w.ServeErr(ctx, &webbase.Error{
+				StatusCode: http.StatusInternalServerError,
+				Log:        fmt.Sprintf("failed to create user. %v", err),
+			})
+		}
+		err = w.manager.RegisterUser(ctx.Request.Context(), *user)
+		if errors.Is(err, auth.ErrUserExists) {
+			w.ServeErr(ctx, &webbase.Error{
+				StatusCode: http.StatusBadRequest,
+				Messages:   []string{"Already registered"},
+				Log:        fmt.Sprintf("failed to create user. %v", err),
+			})
+			return
+		}
+		if err != nil {
+			w.ServeErr(ctx, &webbase.Error{
+				StatusCode: http.StatusInternalServerError,
+				Log:        fmt.Sprintf("failed to register user. %v", err),
+			})
+			return
+		}
+		token, err := w.manager.Login(ctx.Request.Context(), email, password)
+		if err != nil {
+			w.ServeErr(ctx, &webbase.Error{
+				StatusCode: http.StatusInternalServerError,
+				Log:        fmt.Sprintf("login failed. %v", err),
+			})
+			return
+		}
+		// authorized
+		middlewares.SetToken(
+			ctx, token.JWT, int(w.manager.TokenExpieration.Seconds()))
+		ctx.Redirect(http.StatusMovedPermanently, "/")
+		return
 	default:
 		w.ServeErr(ctx, &webbase.Error{
 			StatusCode: http.StatusBadRequest,
@@ -135,11 +172,10 @@ func (w *Web) SetOrgUser() gin.HandlerFunc {
 			return PageData{
 				Data: webbase.NewData(
 					"Golinks - Organization Management", ctx),
-				Users:             userSlice,
-				Admin:             admin,
-				FormInputEmail:    formInputEmail,
-				FormInputPassword: formInputPassword,
-				FormBtnAction:     formBtnAction,
+				Users:          userSlice,
+				Admin:          admin,
+				FormInputEmail: formInputEmail,
+				FormBtnAction:  formBtnActionSave,
 			}, nil
 		},
 	)
@@ -148,7 +184,6 @@ func (w *Web) SetOrgUser() gin.HandlerFunc {
 // HandleSetOrgUserForm handle request to create org user.
 func (w *Web) HandleSetOrgUserForm(ctx *gin.Context) {
 	email := ctx.PostForm(formInputEmail)
-	password := ctx.PostForm(formInputPassword)
 	org, err := middlewares.GetOrg(ctx)
 	if err != nil {
 		w.ServeErr(ctx, &webbase.Error{
@@ -157,92 +192,64 @@ func (w *Web) HandleSetOrgUserForm(ctx *gin.Context) {
 		})
 		return
 	}
-	user, err := auth.NewUser(email, password, org.Name)
-	if err != nil {
-		w.ServeErr(ctx, &webbase.Error{
-			StatusCode: http.StatusInternalServerError,
-			Log:        fmt.Sprintf("failed to init user, err: %v", err),
-		})
-		return
-	}
-	err = w.manager.RegisterUser(ctx, *user)
+	err = w.manager.SetUserOrg(ctx, email, org.Name)
 	if err == nil {
 		ctx.Redirect(http.StatusMovedPermanently, "/org/manage")
-		return
-	}
-	if errors.Is(err, auth.ErrUserExists) {
-		w.ServeErr(ctx, &webbase.Error{
-			StatusCode: http.StatusBadRequest,
-			Log:        "user exists",
-		})
 		return
 	}
 	if errors.Is(err, auth.ErrNotFound) {
 		w.ServeErr(ctx, &webbase.Error{
 			StatusCode: http.StatusBadRequest,
-			Log:        "org not found",
+			Log:        fmt.Sprintf("failed to set user org; err: %v", err),
 		})
 		return
 	}
 	w.ServeErr(ctx, &webbase.Error{
 		StatusCode: http.StatusInternalServerError,
-		Log:        fmt.Sprintf("failed to set user, err: %v", err),
+		Log:        fmt.Sprintf("failed to set user org; err: %v", err),
 	})
 }
 
-// SetOrg sets org.
-func (w *Web) SetOrg() gin.HandlerFunc {
+// OrgRegister sets org.
+func (w *Web) OrgRegister() gin.HandlerFunc {
 	return w.Handler(
 		"org.html.tmpl",
 		func(ctx *gin.Context) (interface{}, *webbase.Error) {
 			return PageData{
-				Data:              webbase.NewData("Golinks - Organization Creation", ctx),
-				FormInputName:     formInputName,
-				FormInputEmail:    formInputEmail,
-				FormInputPassword: formInputPassword,
-				FormBtnAction:     formBtnAction,
+				Data:           webbase.NewData("Golinks - Organization Creation", ctx),
+				FormInputName:  formInputName,
+				FormInputEmail: formInputEmail,
+				FormBtnAction:  formBtnActionCreate,
 			}, nil
 		},
 	)
 }
 
-// HandleSetOrgForm handle request to create org.
-func (w *Web) HandleSetOrgForm(ctx *gin.Context) {
-	name := ctx.PostForm(formInputName)
-	email := ctx.PostForm(formInputEmail)
-	password := ctx.PostForm(formInputPassword)
-	org := auth.Organization{
-		Name:       name,
-		AdminEmail: email,
-	}
-	user, err := auth.NewUser(email, password, name)
+// HandleOrgRegisterForm handle request to create org.
+func (w *Web) HandleOrgRegisterForm(ctx *gin.Context) {
+	user, err := middlewares.GetUser(ctx)
 	if err != nil {
 		w.ServeErr(ctx, &webbase.Error{
 			StatusCode: http.StatusInternalServerError,
-			Log:        fmt.Sprintf("failed to init user, err: %v", err),
+			Log:        fmt.Sprintf("failed to get user, err: %v", err),
 		})
 		return
 	}
-	err = w.manager.RegisterOrgWithAdmin(ctx.Request.Context(), org, *user)
+	name := ctx.PostForm(formInputName)
+	org := auth.Organization{
+		Name:       name,
+		AdminEmail: user.Email,
+	}
+	err = w.manager.RegisterOrg(ctx.Request.Context(), org)
 	if err == nil {
-		// In order to redirect to user add page with authorization,
-		// we hack redirect url with credential.
-		ctx.Writer.Header().Set(
-			"Location",
-			fmt.Sprintf(
-				"http://%s:%s@%s/org/manage",
-				email,
-				password,
-				ctx.Request.Host,
-			),
-		)
-		ctx.AbortWithStatus(http.StatusMovedPermanently)
+		ctx.Redirect(http.StatusMovedPermanently, "/")
 		return
 	}
-	if errors.Is(err, auth.ErrOrgExists) {
+	if errors.Is(err, auth.ErrOrgExists) ||
+		errors.Is(err, auth.ErrBadParams) {
 		w.ServeErr(ctx, &webbase.Error{
 			StatusCode: http.StatusBadRequest,
-			Log:        "org already exists",
+			Log:        fmt.Sprintf("failed to register org. err: %v", err),
 		})
 		return
 	}

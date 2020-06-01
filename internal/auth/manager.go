@@ -57,9 +57,11 @@ func (m *Manager) RegisterUser(ctx context.Context, user User) (err error) {
 	return m.SetUser(ctx, user)
 }
 
-// RegisterOrg creates the org.
+// RegisterOrg creates the org if org doesn't exist and admin holds no other
+// org.
 func (m *Manager) RegisterOrg(ctx context.Context, org Organization) (
 	err error) {
+	// check if org already exists
 	var exists bool
 	exists, err = m.IsOrgExists(ctx, org.Name)
 	if err != nil {
@@ -70,21 +72,28 @@ func (m *Manager) RegisterOrg(ctx context.Context, org Organization) (
 		err = ErrOrgExists
 		return
 	}
-	if org.AdminEmail != "" {
-		exists, err = m.IsUserExists(ctx, org.AdminEmail)
-		if err != nil {
-			err = fmt.Errorf("failed to get admin exists. %w", err)
-			return
-		}
-		if !exists {
-			err = fmt.Errorf("admin user not found. %w", ErrNotFound)
-			return
-		}
+	// update admin user
+	admin, err := m.GetUser(ctx, org.AdminEmail)
+	if err != nil {
+		err = fmt.Errorf("failed to get admin exists. %w", err)
+		return
 	}
-	// create org.
+	if admin.Organization != "" {
+		err = fmt.Errorf("admin holds another org. %w", ErrBadParams)
+		return
+	}
+	admin.Organization = org.Name
+	err = m.SetUser(ctx, admin)
+	if err != nil {
+		return
+	}
+	// create org
 	err = m.SetOrg(ctx, org)
 	if err != nil {
 		err = fmt.Errorf("%v;%w", err, ErrStoreError)
+		// best effort to revert user
+		admin.Organization = ""
+		_ = m.SetUser(ctx, admin)
 	}
 	return
 }

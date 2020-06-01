@@ -10,7 +10,6 @@ import (
 // Data defines the base data.
 type Data struct {
 	Title      string
-	LoggedIn   bool
 	BinVersion string
 	Ctx        struct {
 		Org, User string
@@ -25,16 +24,14 @@ func NewData(title string, ctx *gin.Context) Data {
 		BinVersion: version.Version(),
 	}
 	org, err := middlewares.GetOrg(ctx)
-	if err != nil {
-		return data
+	if err == nil {
+		data.Ctx.Org = org.Name
 	}
-	data.Ctx.Org = org.Name
 	user, err := middlewares.GetUser(ctx)
-	if err != nil {
-		return data
+	if err == nil {
+		data.Ctx.User = user.Email
+		data.Ctx.LoggedIn = true
 	}
-	data.Ctx.User = user.Email
-	data.Ctx.LoggedIn = true
 	return data
 }
 

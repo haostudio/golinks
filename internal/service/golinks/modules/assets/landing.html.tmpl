@@ -12,13 +12,22 @@
           </div>
           {{- if .AuthEnabled }}
           <div class="uk-margin-bottom">
+          {{- if .Ctx.LoggedIn }}
+          <!-- Authorized -->
+          {{- if eq .Ctx.Org "" }}
+            <!-- No org -->
             <a href="auth/org/register" class="uk-button uk-button-default uk-button-large uk-text-bold uk-margin-right">Register Organization</a>
+          {{- else }}
+            <!-- With org -->
             <a href="auth/org/manage" class="uk-button uk-button-default uk-button-large uk-text-bold">Add User</a>
+            <a href="links" class="uk-button uk-button-primary uk-button-large uk-text-bold">All Links</a>
+          {{- end }}
+          {{- else }}
+          <!-- Unauthorized -->
+            <a href="auth/login" class="uk-button uk-button-default uk-button-large uk-text-bold">LOGIN / REGISTER</a>
+          {{- end }}
           </div>
           {{- end }}
-          <div>
-            <a href="links" class="uk-button uk-button-primary uk-button-large uk-text-bold">All Links</a>
-          </div>
         </div >
       </div>
     </div>

@@ -80,11 +80,3 @@ For more options, checkout the [configuration guide](wiki/docs/install.md)
 ### Edit link
 
 ![edit_link](./images/edit_link.png?raw=true "Edit Link")
-
-### Register organization
-
-![create_org](./images/create_org.png?raw=true "Create Org")
-
-### Add user
-
-![create_user](./images/create_user.png?raw=true "Create User")

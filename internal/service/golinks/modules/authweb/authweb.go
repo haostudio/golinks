@@ -13,14 +13,35 @@ import (
 	"github.com/haostudio/golinks/internal/service/golinks/modules/webbase"
 )
 
-// Middleware returns the auth middleware that redirects to login page if the
-// request is unauthorized.
-func Middleware(manager *auth.Manager, path string) gin.HandlerFunc {
-	return middlewares.Auth(manager, func(ctx *gin.Context) {
-		callback := ctx.Request.URL.EscapedPath()
-		url := fmt.Sprintf("/%s/login?callback=%s", strings.Trim(path, "/"), callback)
-		ctx.Redirect(http.StatusMovedPermanently, url)
-		ctx.Abort()
+// AuthRequired returns the middleware that requires logged in and redirects to
+// login page if the request is unauthorized.
+func AuthRequired(path string) gin.HandlerFunc {
+	return middlewares.AuthRequired(func(ctx *gin.Context, err error) {
+		if errors.Is(err, middlewares.ErrNotFound) {
+			callback := ctx.Request.URL.EscapedPath()
+			url := fmt.Sprintf(
+				"/%s/login?callback=%s", strings.Trim(path, "/"), callback)
+			ctx.Redirect(http.StatusMovedPermanently, url)
+			ctx.Abort()
+			return
+		}
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	})
+}
+
+// OrgRequired returns the middleware that requires organization and redirects
+// to org register page if the user is without org.
+func OrgRequired(path string) gin.HandlerFunc {
+	return middlewares.OrgRequired(func(ctx *gin.Context, err error) {
+		if errors.Is(err, middlewares.ErrNotFound) {
+			callback := ctx.Request.URL.EscapedPath()
+			url := fmt.Sprintf(
+				"/%s/org/register?callback=%s", strings.Trim(path, "/"), callback)
+			ctx.Redirect(http.StatusMovedPermanently, url)
+			ctx.Abort()
+			return
+		}
+		ctx.AbortWithStatus(http.StatusInternalServerError)
 	})
 }
 
@@ -76,10 +97,29 @@ func Register(router gin.IRouter, conf Config) {
 
 	{
 		orgRouter := router.Group("org")
-		orgRouter.GET("register", web.SetOrg())
-		orgRouter.POST("register", web.HandleSetOrgForm)
+		orgRouter.Use(AuthRequired(conf.PathPrefix))
+		orgRouter.GET("register", func(ctx *gin.Context) {
+			_, err := middlewares.GetOrg(ctx)
+			if err == nil {
+				// already in an org
+				ctx.Redirect(
+					http.StatusMovedPermanently,
+					fmt.Sprintf("/%s/org/manage", conf.PathPrefix),
+				)
+				return
+			}
+			if !errors.Is(err, middlewares.ErrNotFound) {
+				web.ServeErr(ctx, &webbase.Error{
+					StatusCode: http.StatusInternalServerError,
+					Log:        fmt.Sprintf("failed to get org. %v", err),
+				})
+				return
+			}
+			web.OrgRegister()(ctx)
+		})
+		orgRouter.POST("register", web.HandleOrgRegisterForm)
 
-		orgRouter.Use(Middleware(conf.Manager, conf.PathPrefix))
+		orgRouter.Use(OrgRequired(conf.PathPrefix))
 		orgRouter.GET("manage", web.SetOrgUser())
 		orgRouter.POST("manage", web.HandleSetOrgUserForm)
 	}

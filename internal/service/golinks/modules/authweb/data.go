@@ -11,10 +11,9 @@ type User struct {
 type PageData struct {
 	webbase.Data
 
-	FormInputEmail    string
-	FormInputPassword string
-	FormBtnAction     string
-	FormInputName     string
+	FormInputEmail string
+	FormBtnAction  string
+	FormInputName  string
 
 	Users []User
 	Admin bool

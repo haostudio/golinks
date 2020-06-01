@@ -41,23 +41,21 @@ func TestManagerRegisterOrg(t *testing.T) {
 		manager := testManager()
 		org := Organization{
 			Name:       "org",
-			AdminEmail: "",
-		}
-		require.NoError(t, manager.RegisterOrg(context.Background(), org))
-	}
-	{
-		manager := testManager()
-		org := Organization{
-			Name:       "org",
-			AdminEmail: "email@test.com",
+			AdminEmail: "admin@test.com",
 		}
 		err := manager.RegisterOrg(context.Background(), org)
 		require.True(t, errors.Is(err, ErrNotFound))
-
-		user, err := NewUser("email@test.com", "test_pwd", "org")
+		user, err := NewUser("admin@test.com", "test_pwd", "")
 		require.NoError(t, err)
 		require.NoError(t, manager.SetUser(context.Background(), *user))
 		require.NoError(t, manager.RegisterOrg(context.Background(), org))
+
+		err = manager.RegisterOrg(context.Background(), Organization{
+			Name:       "orgxx",
+			AdminEmail: "admin@test.com",
+		})
+		require.True(t,
+			errors.Is(err, ErrBadParams), "%v is not  %v", err, ErrBadParams)
 	}
 }
 

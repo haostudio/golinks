@@ -10,7 +10,7 @@
           <div class="uk-text-muted uk-margin-large-bottom">
           GOLINKS is a <span class="uk-text-bold uk-text-emphasis">open-sourced</span> short link redirect service.
           </div>
-          {{- if .AuthEnabled }}
+          {{- if .Ctx.AuthEnabled }}
           <div class="uk-margin-bottom">
           {{- if .Ctx.LoggedIn }}
           <!-- Authorized -->
@@ -26,6 +26,9 @@
           <!-- Unauthorized -->
             <a href="auth/login" class="uk-button uk-button-default uk-button-large uk-text-bold">LOGIN / REGISTER</a>
           {{- end }}
+          {{- else }}
+          <!-- NoAuth-->
+            <a href="links" class="uk-button uk-button-primary uk-button-large uk-text-bold">All Links</a>
           </div>
           {{- end }}
         </div >

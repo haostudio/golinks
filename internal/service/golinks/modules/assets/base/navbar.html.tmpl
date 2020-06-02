@@ -7,6 +7,7 @@
     </ul>
   </div>
   <div class="uk-navbar-right uk-margin-large-right">
+  {{- if .Ctx.AuthEnabled }}
   {{- if .Ctx.LoggedIn }}
     <ul class="uk-navbar-nav">
       <li class="uk-text-bold"><a href='/auth/logout'>LOGOUT</a></li>
@@ -15,6 +16,7 @@
     <ul class="uk-navbar-nav">
       <li class="uk-text-bold"><a href='/auth/login'>LOGIN / REGISTER</a></li>
     </ul>
+  {{- end }}
   {{- end }}
   </div>
 </nav>

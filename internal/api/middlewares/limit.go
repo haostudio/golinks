@@ -3,12 +3,10 @@ package middlewares
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/haostudio/golinks/internal/limiter"
-	slidingwindow "github.com/haostudio/golinks/internal/limiter/sliding-window"
 )
 
 // Limited returns a middleware that limits the access of clients with
@@ -41,20 +39,4 @@ func Limited(
 			return
 		}
 	}
-}
-
-// OrgRateLimit defines a rate limited middleware of an org.
-func OrgRateLimit(limit int, windowSize time.Duration) gin.HandlerFunc {
-	return Limited(
-		func(ctx *gin.Context) (string, error) {
-			logger := GetLogger(ctx)
-			org, err := GetOrg(ctx)
-			if err != nil {
-				logger.Error("failed to get org. err: %v", err)
-				return "", err
-			}
-			return org.Name, nil
-		},
-		slidingwindow.New(limit, windowSize),
-	)
 }

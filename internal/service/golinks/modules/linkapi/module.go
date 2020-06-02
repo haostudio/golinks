@@ -8,6 +8,7 @@ import (
 
 	"github.com/haostudio/golinks/internal/api/middlewares"
 	"github.com/haostudio/golinks/internal/link"
+	"github.com/haostudio/golinks/internal/service/golinks/ctx"
 )
 
 // New returns a new link api module.
@@ -28,20 +29,20 @@ func (l *Links) PathParamLinkKey() string {
 }
 
 // GetLinks returns all links.
-func (l *Links) GetLinks(ctx *gin.Context) {
-	logger := middlewares.GetLogger(ctx)
+func (l *Links) GetLinks(ginctx *gin.Context) {
+	logger := middlewares.GetLogger(ginctx)
 
 	// get links
-	org, err := middlewares.GetOrg(ctx)
+	org, err := ctx.GetOrg(ginctx)
 	if err != nil {
 		logger.Error("failed to get org. err: %v", err)
-		ctx.Status(http.StatusInternalServerError)
+		ginctx.Status(http.StatusInternalServerError)
 		return
 	}
-	links, err := l.store.GetLinks(ctx.Request.Context(), org.Name)
+	links, err := l.store.GetLinks(ginctx.Request.Context(), org.Name)
 	if err != nil {
 		logger.Error("failed to get links from store. err: %v", err)
-		ctx.Status(http.StatusInternalServerError)
+		ginctx.Status(http.StatusInternalServerError)
 		return
 	}
 
@@ -67,16 +68,16 @@ func (l *Links) GetLinks(ctx *gin.Context) {
 		res[key] = desc
 	}
 
-	ctx.JSON(http.StatusOK, res)
+	ginctx.JSON(http.StatusOK, res)
 }
 
 // UpdateLink updates the link.
-func (l *Links) UpdateLink(ctx *gin.Context) {
-	logger := middlewares.GetLogger(ctx)
-	key := ctx.Param(l.PathParamLinkKey())
+func (l *Links) UpdateLink(ginctx *gin.Context) {
+	logger := middlewares.GetLogger(ginctx)
+	key := ginctx.Param(l.PathParamLinkKey())
 	if len(key) == 0 {
 		logger.Error("empty key")
-		ctx.String(http.StatusBadRequest, "empty key")
+		ginctx.String(http.StatusBadRequest, "empty key")
 		return
 	}
 
@@ -85,7 +86,7 @@ func (l *Links) UpdateLink(ctx *gin.Context) {
 		Version int    `json:"version"`
 		Payload string `json:"payload"`
 	}
-	err := ctx.BindJSON(&req)
+	err := ginctx.BindJSON(&req)
 	if err != nil {
 		logger.Error("failed to bind json. err: %v", err)
 		return
@@ -93,48 +94,48 @@ func (l *Links) UpdateLink(ctx *gin.Context) {
 	link, err := link.New(req.Version, req.Payload)
 	if err != nil {
 		logger.Error("failed to bind json. err: %v", err)
-		ctx.Status(http.StatusBadRequest)
+		ginctx.Status(http.StatusBadRequest)
 		return
 	}
 
 	// update to store
-	org, err := middlewares.GetOrg(ctx)
+	org, err := ctx.GetOrg(ginctx)
 	if err != nil {
 		logger.Error("failed to get org. err: %v", err)
-		ctx.Status(http.StatusInternalServerError)
+		ginctx.Status(http.StatusInternalServerError)
 		return
 	}
-	err = l.store.UpdateLink(ctx.Request.Context(), org.Name, key, *link)
+	err = l.store.UpdateLink(ginctx.Request.Context(), org.Name, key, *link)
 	if err != nil {
 		logger.Error(
 			"failed to update \"%s\" to %s in store. err: %v", key, *link, err)
-		ctx.Status(http.StatusInternalServerError)
+		ginctx.Status(http.StatusInternalServerError)
 		return
 	}
-	ctx.Status(http.StatusOK)
+	ginctx.Status(http.StatusOK)
 }
 
 // DeleteLink deletes the link.
-func (l *Links) DeleteLink(ctx *gin.Context) {
-	logger := middlewares.GetLogger(ctx)
-	key := ctx.Param(l.PathParamLinkKey())
+func (l *Links) DeleteLink(ginctx *gin.Context) {
+	logger := middlewares.GetLogger(ginctx)
+	key := ginctx.Param(l.PathParamLinkKey())
 	if len(key) == 0 {
 		logger.Error("empty key")
-		ctx.String(http.StatusBadRequest, "empty key")
+		ginctx.String(http.StatusBadRequest, "empty key")
 		return
 	}
 
-	org, err := middlewares.GetOrg(ctx)
+	org, err := ctx.GetOrg(ginctx)
 	if err != nil {
 		logger.Error("failed to get org. err: %v", err)
-		ctx.Status(http.StatusInternalServerError)
+		ginctx.Status(http.StatusInternalServerError)
 		return
 	}
-	err = l.store.DeleteLink(ctx.Request.Context(), org.Name, key)
+	err = l.store.DeleteLink(ginctx.Request.Context(), org.Name, key)
 	if err != nil {
 		logger.Error("failed to delete \"%s\" from store. err: %v", key, err)
-		ctx.Status(http.StatusInternalServerError)
+		ginctx.Status(http.StatusInternalServerError)
 		return
 	}
-	ctx.Status(http.StatusOK)
+	ginctx.Status(http.StatusOK)
 }

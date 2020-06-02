@@ -9,13 +9,11 @@ import (
 // Data defines the data for landing.html template.
 type Data struct {
 	webbase.Data
-	AuthEnabled bool
 }
 
 // NewData returns landing page data.
-func NewData(authEnabled bool, ctx *gin.Context) Data {
+func NewData(ctx *gin.Context) Data {
 	return Data{
-		Data:        webbase.NewData("Golinks", ctx),
-		AuthEnabled: authEnabled,
+		Data: webbase.NewData("Golinks", ctx),
 	}
 }

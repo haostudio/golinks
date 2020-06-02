@@ -9,6 +9,7 @@ import (
 
 	"github.com/haostudio/golinks/internal/api/middlewares"
 	"github.com/haostudio/golinks/internal/link"
+	"github.com/haostudio/golinks/internal/service/golinks/ctx"
 	"github.com/haostudio/golinks/internal/service/golinks/modules/webbase"
 )
 
@@ -21,30 +22,30 @@ type Config struct {
 // Handler redirects requests based on the link.Store.
 func Handler(conf Config) gin.HandlerFunc {
 	web := webbase.NewBase(conf.Traced)
-	return func(ctx *gin.Context) {
-		logger := middlewares.GetLogger(ctx)
+	return func(ginctx *gin.Context) {
+		logger := middlewares.GetLogger(ginctx)
 
-		path := ctx.Request.URL.Path
+		path := ginctx.Request.URL.Path
 		key, param := link.Parse(path)
 		logger.Debug("key=%s param=%s", key, param)
 
-		org, err := middlewares.GetOrg(ctx)
+		org, err := ctx.GetOrg(ginctx)
 		if err != nil {
 			logger.Error("failed to get org. err: %v", err)
-			web.ServeErr(ctx, &webbase.Error{
+			web.ServeErr(ginctx, &webbase.Error{
 				StatusCode: http.StatusInternalServerError,
 			})
 			return
 		}
-		ln, err := conf.Store.GetLink(ctx, org.Name, key)
+		ln, err := conf.Store.GetLink(ginctx, org.Name, key)
 		if errors.Is(err, link.ErrNotFound) {
-			ctx.Redirect(
+			ginctx.Redirect(
 				http.StatusTemporaryRedirect, fmt.Sprintf("/links/edit/%s", key))
 			return
 		}
 		if err != nil {
 			logger.Error("failed to get link from store. err: %v", err)
-			web.ServeErr(ctx, &webbase.Error{
+			web.ServeErr(ginctx, &webbase.Error{
 				StatusCode: http.StatusInternalServerError,
 			})
 			return
@@ -56,24 +57,24 @@ func Handler(conf Config) gin.HandlerFunc {
 			desc, err := ln.Description()
 			if err != nil {
 				logger.Error("failed to get link desc. err: %v", err)
-				web.ServeErr(ctx, &webbase.Error{
+				web.ServeErr(ginctx, &webbase.Error{
 					StatusCode: http.StatusInternalServerError,
 				})
 				return
 			}
-			web.ServeErr(ctx, &webbase.Error{
+			web.ServeErr(ginctx, &webbase.Error{
 				StatusCode: http.StatusBadRequest,
 				Messages:   []string{"Invalid params", desc},
 			})
 			return
 		} else if err != nil {
 			logger.Error("failed to get target link. err: %v", err)
-			web.ServeErr(ctx, &webbase.Error{
+			web.ServeErr(ginctx, &webbase.Error{
 				StatusCode: http.StatusInternalServerError,
 			})
 			return
 		}
 		logger.Debug("redirect %s to %s", path, target)
-		ctx.Redirect(http.StatusTemporaryRedirect, target)
+		ginctx.Redirect(http.StatusTemporaryRedirect, target)
 	}
 }

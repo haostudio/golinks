@@ -8,21 +8,18 @@ import (
 
 // Config defines the web config.
 type Config struct {
-	AuthEnabled bool
-	Traced      bool
+	Traced bool
 }
 
 // Web defines the web handler module.
 type Web struct {
 	webbase.Base
-	AuthEnabled bool
 }
 
 // New returns a new web handler module.
 func New(conf Config) *Web {
 	return &Web{
-		Base:        webbase.NewBase(conf.Traced),
-		AuthEnabled: conf.AuthEnabled,
+		Base: webbase.NewBase(conf.Traced),
 	}
 }
 
@@ -31,7 +28,7 @@ func (w *Web) Landing() gin.HandlerFunc {
 	return w.Handler(
 		"landing.html.tmpl",
 		func(ctx *gin.Context) (interface{}, *webbase.Error) {
-			return NewData(w.AuthEnabled, ctx), nil
+			return NewData(ctx), nil
 		},
 	)
 }

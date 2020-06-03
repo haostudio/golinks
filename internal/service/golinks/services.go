@@ -15,6 +15,7 @@ import (
 	"github.com/haostudio/golinks/internal/auth"
 	"github.com/haostudio/golinks/internal/link"
 	"github.com/haostudio/golinks/internal/service"
+	"github.com/haostudio/golinks/internal/service/golinks/ctx"
 	"github.com/haostudio/golinks/internal/service/golinks/modules/authapi"
 	"github.com/haostudio/golinks/internal/service/golinks/modules/authweb"
 	"github.com/haostudio/golinks/internal/service/golinks/modules/landingweb"
@@ -95,7 +96,11 @@ func (s *svc) buildRouter() http.Handler {
 	}
 	router.Use(middlewares.CtxLogger)
 	router.Use(middlewares.PanicCatcher)
-	router.Use(middlewares.Context(s.Auth.Manager))
+
+	var serviceCtx ctx.Ctx
+	serviceCtx.Auth.Enabled = s.Auth.Enabled
+	serviceCtx.Auth.Manager = s.Auth.Manager
+	router.Use(ctx.Middeware(serviceCtx))
 
 	// static doc site
 	if s.Wiki {
@@ -117,12 +122,11 @@ func (s *svc) buildRouter() http.Handler {
 
 	// Landing page
 	landingweb.Register(router, landingweb.Config{
-		Traced:      s.Traced,
-		AuthEnabled: s.Auth.Enabled,
+		Traced: s.Traced,
 	})
 
-	authWebMiddleware := middlewares.NoAuth(s.Auth.DefaultOrg)
-	authAPIMiddleware := middlewares.NoAuth(s.Auth.DefaultOrg)
+	authWebMiddleware := ctx.NoAuth(s.Auth.DefaultOrg)
+	authAPIMiddleware := ctx.NoAuth(s.Auth.DefaultOrg)
 
 	// Org web module
 	if s.Auth.Enabled {
@@ -133,7 +137,7 @@ func (s *svc) buildRouter() http.Handler {
 			PathPrefix: "auth",
 		})
 		authWebMiddleware = authweb.AuthRequired("/auth")
-		authAPIMiddleware = middlewares.AuthSimple401
+		authAPIMiddleware = ctx.AuthSimple401
 	}
 
 	// Link web module
@@ -165,9 +169,9 @@ func (s *svc) buildRouter() http.Handler {
 	var noRoute []gin.HandlerFunc
 	noRoute = append(noRoute, authWebMiddleware)
 	if s.Auth.Enabled {
-		noRoute = append(noRoute, middlewares.OrgRateLimit(5, time.Second))
+		noRoute = append(noRoute, ctx.OrgRateLimit(5, time.Second))
 	} else {
-		noRoute = append(noRoute, middlewares.OrgRateLimit(100, time.Second))
+		noRoute = append(noRoute, ctx.OrgRateLimit(100, time.Second))
 	}
 	noRoute = append(noRoute,
 		redirect.Handler(redirect.Config{

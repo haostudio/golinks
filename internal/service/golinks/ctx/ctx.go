@@ -1,4 +1,4 @@
-package middlewares
+package ctx
 
 import (
 	"errors"
@@ -6,23 +6,45 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/haostudio/golinks/internal/api/middlewares"
 	"github.com/haostudio/golinks/internal/auth"
 )
 
-// Context prepares golinks service context in gin.Context.
-func Context(manager *auth.Manager) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		ctx.Set(authManagerKey, manager)
+// Ctx defines the golinks service context.
+type Ctx struct {
+	Auth struct {
+		Enabled bool
+		Manager *auth.Manager
 	}
 }
 
-// GetAuthManager returns the auth.Manager set in context.
-func GetAuthManager(ctx *gin.Context) (*auth.Manager, bool) {
-	val, ok := ctx.Get(authManagerKey)
-	if !ok {
-		return nil, false
+// Middeware prepares golinks service context in gin.Context.
+func Middeware(ctx Ctx) gin.HandlerFunc {
+	return func(ginctx *gin.Context) {
+		ginctx.Set(ctxKey, ctx)
 	}
-	return val.(*auth.Manager), true
+}
+
+// IsAuthEnabled returns the auth is enabled.
+func IsAuthEnabled(ctx *gin.Context) bool {
+	val, ok := ctx.Get(ctxKey)
+	if !ok {
+		return false
+	}
+	return val.(Ctx).Auth.Enabled
+}
+
+// GetAuthManager returns the auth.Manager set in context.
+func GetAuthManager(ctx *gin.Context) (manager *auth.Manager, ok bool) {
+	val, ok := ctx.Get(ctxKey)
+	if !ok {
+		return
+	}
+	manager = val.(Ctx).Auth.Manager
+	if manager == nil {
+		ok = false
+	}
+	return
 }
 
 // GetUser returns the user of the request.
@@ -34,7 +56,7 @@ func GetUser(ctx *gin.Context) (user auth.User, err error) {
 		return
 	}
 	// get from manager
-	logger := GetLogger(ctx)
+	logger := middlewares.GetLogger(ctx)
 	manager, ok := GetAuthManager(ctx)
 	if !ok {
 		logger.Error("auth manager not found")
@@ -79,7 +101,7 @@ func GetOrg(ctx *gin.Context) (org auth.Organization, err error) {
 		org = val.(auth.Organization)
 		return
 	}
-	logger := GetLogger(ctx)
+	logger := middlewares.GetLogger(ctx)
 	user, err := GetUser(ctx)
 	if err != nil {
 		logger.Error("failed to get user. err: %v", err)

@@ -3,7 +3,7 @@ package webbase
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/haostudio/golinks/internal/api/middlewares"
+	"github.com/haostudio/golinks/internal/service/golinks/ctx"
 	"github.com/haostudio/golinks/internal/version"
 )
 
@@ -12,26 +12,28 @@ type Data struct {
 	Title      string
 	BinVersion string
 	Ctx        struct {
-		Org, User string
-		LoggedIn  bool
+		Org, User   string
+		LoggedIn    bool
+		AuthEnabled bool
 	}
 }
 
 // NewData returns a database.
-func NewData(title string, ctx *gin.Context) Data {
+func NewData(title string, ginctx *gin.Context) Data {
 	data := Data{
 		Title:      title,
 		BinVersion: version.Version(),
 	}
-	org, err := middlewares.GetOrg(ctx)
+	org, err := ctx.GetOrg(ginctx)
 	if err == nil {
 		data.Ctx.Org = org.Name
 	}
-	user, err := middlewares.GetUser(ctx)
+	user, err := ctx.GetUser(ginctx)
 	if err == nil {
 		data.Ctx.User = user.Email
 		data.Ctx.LoggedIn = true
 	}
+	data.Ctx.AuthEnabled = ctx.IsAuthEnabled(ginctx)
 	return data
 }
 

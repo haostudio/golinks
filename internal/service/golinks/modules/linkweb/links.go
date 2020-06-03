@@ -11,6 +11,7 @@ import (
 
 	"github.com/haostudio/golinks/internal/api/middlewares"
 	"github.com/haostudio/golinks/internal/link"
+	"github.com/haostudio/golinks/internal/service/golinks/ctx"
 	"github.com/haostudio/golinks/internal/service/golinks/modules/webbase"
 )
 
@@ -51,16 +52,16 @@ func (w *Web) PathParamLinkKey() string {
 func (w *Web) Links() gin.HandlerFunc {
 	return w.Handler(
 		"links.html.tmpl",
-		func(ctx *gin.Context) (interface{}, *webbase.Error) {
+		func(ginctx *gin.Context) (interface{}, *webbase.Error) {
 			// get links
-			org, err := middlewares.GetOrg(ctx)
+			org, err := ctx.GetOrg(ginctx)
 			if err != nil {
 				return nil, &webbase.Error{
 					StatusCode: http.StatusInternalServerError,
 					Log:        fmt.Sprintf("failed to get org. err: %v", err),
 				}
 			}
-			links, err := w.store.GetLinks(ctx.Request.Context(), org.Name)
+			links, err := w.store.GetLinks(ginctx.Request.Context(), org.Name)
 			if errors.Is(err, link.ErrNotFound) {
 				links = make(map[string]link.Link)
 			} else if err != nil {
@@ -82,8 +83,8 @@ func (w *Web) Links() gin.HandlerFunc {
 			sort.Strings(keys)
 
 			// construct data
-			logger := middlewares.GetLogger(ctx)
-			pageData := NewAllPageData(ctx)
+			logger := middlewares.GetLogger(ginctx)
+			pageData := NewAllPageData(ginctx)
 			for _, key := range keys {
 				ln := links[key]
 				lnData, err := NewLink(key, ln)
@@ -102,10 +103,10 @@ func (w *Web) Links() gin.HandlerFunc {
 func (w *Web) EditLink() gin.HandlerFunc {
 	return w.Handler(
 		"edit.html.tmpl",
-		func(ctx *gin.Context) (interface{}, *webbase.Error) {
-			key := ctx.Param(w.PathParamLinkKey())
+		func(ginctx *gin.Context) (interface{}, *webbase.Error) {
+			key := ginctx.Param(w.PathParamLinkKey())
 
-			pageData := NewEditPageData(ctx)
+			pageData := NewEditPageData(ginctx)
 			pageData.FormInputVersion = formInputVersion
 			pageData.FormInputPayload = formInputPayload
 			pageData.FormInputAction = formInputAction
@@ -113,7 +114,7 @@ func (w *Web) EditLink() gin.HandlerFunc {
 			pageData.FormDeleteValue = formDeleteValue
 			pageData.Link.Key = key
 
-			org, err := middlewares.GetOrg(ctx)
+			org, err := ctx.GetOrg(ginctx)
 			if err != nil {
 				return nil, &webbase.Error{
 					StatusCode: http.StatusInternalServerError,
@@ -122,7 +123,7 @@ func (w *Web) EditLink() gin.HandlerFunc {
 			}
 			for len(key) != 0 {
 				// Get link from store
-				ln, err := w.store.GetLink(ctx.Request.Context(), org.Name, key)
+				ln, err := w.store.GetLink(ginctx.Request.Context(), org.Name, key)
 				if errors.Is(err, link.ErrNotFound) {
 					break
 				}
@@ -151,10 +152,10 @@ func (w *Web) EditLink() gin.HandlerFunc {
 }
 
 // HandleEditLinktForm handles the edit.html form submission.
-func (w *Web) HandleEditLinktForm(ctx *gin.Context) {
-	key := ctx.Param(w.PathParamLinkKey())
+func (w *Web) HandleEditLinktForm(ginctx *gin.Context) {
+	key := ginctx.Param(w.PathParamLinkKey())
 	if len(key) == 0 {
-		w.ServeErr(ctx, &webbase.Error{
+		w.ServeErr(ginctx, &webbase.Error{
 			StatusCode: http.StatusInternalServerError,
 			Messages:   []string{"Empty key"},
 			Log:        "Empty key",
@@ -162,13 +163,13 @@ func (w *Web) HandleEditLinktForm(ctx *gin.Context) {
 		return
 	}
 
-	action := ctx.PostForm("action")
-	version := ctx.PostForm("version")
-	payload := ctx.PostForm("payload")
+	action := ginctx.PostForm("action")
+	version := ginctx.PostForm("version")
+	payload := ginctx.PostForm("payload")
 
-	org, err := middlewares.GetOrg(ctx)
+	org, err := ctx.GetOrg(ginctx)
 	if err != nil {
-		w.ServeErr(ctx, &webbase.Error{
+		w.ServeErr(ginctx, &webbase.Error{
 			StatusCode: http.StatusInternalServerError,
 			Log:        fmt.Sprintf("failed to get org. err: %v", err),
 		})
@@ -178,7 +179,7 @@ func (w *Web) HandleEditLinktForm(ctx *gin.Context) {
 	case formSaveValue:
 		v, err := strconv.Atoi(version)
 		if err != nil {
-			w.ServeErr(ctx, &webbase.Error{
+			w.ServeErr(ginctx, &webbase.Error{
 				StatusCode: http.StatusInternalServerError,
 				Log: fmt.Sprintf(
 					"failed to parse version %s. err: %v", version, err,
@@ -188,7 +189,7 @@ func (w *Web) HandleEditLinktForm(ctx *gin.Context) {
 		}
 		ln, err := link.New(v, payload)
 		if err != nil {
-			w.ServeErr(ctx, &webbase.Error{
+			w.ServeErr(ginctx, &webbase.Error{
 				StatusCode: http.StatusInternalServerError,
 				Log: fmt.Sprintf(
 					"failed to create link from request form. err: %v", err,
@@ -197,31 +198,31 @@ func (w *Web) HandleEditLinktForm(ctx *gin.Context) {
 			return
 		}
 		// update to store
-		err = w.store.UpdateLink(ctx.Request.Context(), org.Name, key, *ln)
+		err = w.store.UpdateLink(ginctx.Request.Context(), org.Name, key, *ln)
 		if err != nil {
-			w.ServeErr(ctx, &webbase.Error{
+			w.ServeErr(ginctx, &webbase.Error{
 				StatusCode: http.StatusInternalServerError,
 				Log: fmt.Sprintf(
 					"failed to update \"%s\" to %v in store. err: %v", key, *ln, err),
 			})
 			return
 		}
-		ctx.Redirect(http.StatusMovedPermanently, "/links")
+		ginctx.Redirect(http.StatusMovedPermanently, "/links")
 		return
 	case formDeleteValue:
-		err := w.store.DeleteLink(ctx.Request.Context(), org.Name, key)
+		err := w.store.DeleteLink(ginctx.Request.Context(), org.Name, key)
 		if err != nil {
-			w.ServeErr(ctx, &webbase.Error{
+			w.ServeErr(ginctx, &webbase.Error{
 				StatusCode: http.StatusInternalServerError,
 				Log: fmt.Sprintf(
 					"failed to delete \"%s\" from store. err: %v", key, err),
 			})
 			return
 		}
-		ctx.Redirect(http.StatusMovedPermanently, "/links")
+		ginctx.Redirect(http.StatusMovedPermanently, "/links")
 		return
 	default:
-		w.ServeErr(ctx, &webbase.Error{
+		w.ServeErr(ginctx, &webbase.Error{
 			StatusCode: http.StatusBadRequest,
 			Messages:   []string{"Invalid action"},
 			Log:        fmt.Sprintf("invalid action %s", action),

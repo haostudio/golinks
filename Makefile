@@ -19,7 +19,7 @@ GO_IMPORT_PATH = github.com/haostudio/golinks
 GO_BUILD_LDFLAGS =
 GO_BUILD_LDFLAGS += -X $(GO_IMPORT_PATH)/internal/version.version=$(GIT_LATEST_TAG)
 
-GO_BUILD_FULL_OPTS = -i $(GO_BUILD_OPTS) -ldflags "$(GO_BUILD_LDFLAGS)"
+GO_BUILD_FULL_OPTS = $(GO_BUILD_OPTS) -ldflags "$(GO_BUILD_LDFLAGS)"
 
 BUILDDIR ?= $(GITROOT)/build
 

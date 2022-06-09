@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/popodidi/conf"
 	"github.com/popodidi/conf/source/env"
+	"github.com/popodidi/conf/source/flag"
 	"github.com/popodidi/conf/source/yaml"
 	"github.com/popodidi/log"
 
@@ -48,7 +49,7 @@ func main() {
 	// Load server config
 	var config Config
 	cfg := conf.New(&config)
-	err := cfg.Load(env.New(), yaml.New("golinks_config.yaml"))
+	err := cfg.Load(flag.New(), env.New(), yaml.New("golinks_config.yaml"))
 	if err != nil {
 		panic(err)
 	}
